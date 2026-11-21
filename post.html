@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field notes | Parneet Kaur</title>
+<meta name="description" content="Field notes on hardware security and digital forensics by Parneet Kaur.">
+<meta name="theme-color" content="#09061a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2309061a'/%3E%3Cg fill='none' stroke='%238b5cff' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M20 40a12 15 0 0 1 24 0'/%3E%3Cpath d='M14 42a18 22 0 0 1 36 0'/%3E%3Cpath d='M26 44a6 9 0 0 1 12 0'/%3E%3C/g%3E%3Ccircle cx='32' cy='46' r='2.6' fill='%23ffd23f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#09061a;--bench:#130f26;--bench2:#1b1636;--line:rgba(201,178,255,.16);--uv:#8b5cff;--uvglow:#c9b2ff;--lum:#4aa8ff;--lumtext:#d9f4ff;--tent:#ffd23f;--text:#ece9fb;--muted:#aaa4c8;--disp:"Archivo","Arial Black",system-ui,sans-serif;--type:"Courier Prime","Courier New",monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--ink)}
+body{min-height:100vh;color:var(--text);font:400 1.1rem/1.75 var(--disp);-webkit-font-smoothing:antialiased;background:radial-gradient(circle 520px at 82% 0%,rgba(139,92,255,.22),transparent 70%),var(--ink)}
+a{color:var(--uvglow)}
+:focus-visible{outline:3px solid var(--tent);outline-offset:3px;border-radius:3px}
+.progress{position:fixed;left:0;top:0;height:3px;width:100%;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--uv),var(--lum));box-shadow:0 0 12px var(--uv)}
+.nav{position:fixed;z-index:50;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:5px;border:1px solid var(--line);border-radius:999px;background:rgba(14,10,32,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.nav a{font:600 .86rem/1 var(--disp);text-decoration:none;color:var(--muted);padding:11px 14px;border-radius:999px;white-space:nowrap}
+.nav a:hover{color:var(--text)}
+.nav a.on{background:var(--tent);color:#1a1200}
+.nav .mk{font-weight:900;color:var(--uvglow);padding:11px 12px}
+.wrap{width:min(720px,100% - 40px);margin:0 auto;padding:130px 0 90px}
+.meta{font:700 .9rem/1.4 var(--type);color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.stamp{display:inline-block;font:700 .72rem/1 var(--type);letter-spacing:.08em;padding:4px 8px 3px;border:2px solid var(--uvglow);color:var(--uvglow);border-radius:3px;transform:rotate(-2deg)}
+h1{margin:18px 0 18px;font:900 clamp(2.2rem,6vw,3.8rem)/1.02 var(--disp);font-stretch:125%;letter-spacing:-.012em;overflow-wrap:anywhere}
+.lede{color:var(--muted);font-size:1.2rem;line-height:1.55;margin-bottom:8px}
+.prose{margin-top:44px;padding-top:36px;border-top:1px dashed var(--line)}
+.prose>*+*{margin-top:1.15em}
+.prose h2{font:800 1.8rem/1.15 var(--disp);font-stretch:112%;margin-top:2em}
+.prose h3{font:800 1.3rem/1.2 var(--disp);font-stretch:108%;margin-top:1.8em}
+.prose ul,.prose ol{padding-left:1.4em}.prose li+li{margin-top:.4em}
+.prose blockquote{border-left:4px solid var(--tent);padding:2px 0 2px 20px;color:var(--lumtext)}
+.prose code{font:400 .92em var(--type);background:var(--bench2);padding:2px 6px;border-radius:4px;color:var(--lumtext)}
+.prose pre{background:var(--bench);border:1px solid var(--line);border-radius:10px;padding:18px 20px;overflow-x:auto;line-height:1.55}
+.prose pre code{background:none;padding:0;font-size:.9rem;color:var(--text)}
+.prose img{max-width:100%;height:auto;border-radius:8px;border:1px solid var(--line);display:block}
+.prose hr{border:0;border-top:1px dashed var(--line)}
+.prose strong{color:#fff}
+.end{margin-top:70px;padding-top:28px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 26px;font:700 1rem/1 var(--disp)}
+.end a{color:var(--text);text-decoration:none;border-bottom:2px solid var(--tent);padding-bottom:4px}
+.end a:hover{color:var(--tent)}
+.empty{padding:30px;border:2px dashed rgba(255,210,63,.45);border-radius:10px;color:var(--muted)}
+@media(max-width:560px){body{font-size:1.04rem}.nav a{padding:10px 11px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<nav class="nav" aria-label="Site"><a class="mk" href="index.html" aria-label="Home">PK</a><a href="index.html">Home</a><a class="on" href="index.html#notes" aria-current="page">Field notes</a><a href="index.html#contact">Contact</a></nav>
+<main class="wrap" id="main">
+  <article id="post"><p class="empty">Loading the note.</p></article>
+  <div class="end"><a href="index.html#notes">All field notes</a><a href="index.html#contact">Get in touch</a></div>
+</main>
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const bar = $("#progress");
+  const onScroll = () => { const h = document.documentElement.scrollHeight - innerHeight; bar.style.transform = "scaleX(" + (h > 0 ? scrollY / h : 0) + ")"; };
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+  /* small, safe markdown: everything is escaped first, then a fixed set of tags is added back */
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const safeUrl = (u) => { u = u.trim(); return /^(https?:|mailto:|#|\/|\.\/|\.\.\/|[\w-]+[\w./-]*$)/i.test(u) && !/^\s*javascript:/i.test(u) ? u : "#"; };
+  function inline(t) {
+    const codes = [];
+    t = t.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return "\u0000" + (codes.length - 1) + "\u0000"; });
+    t = esc(t);
+    t = t.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_, a, u) => '<img src="' + safeUrl(u.replace(/&amp;/g, "&")) + '" alt="' + a + '" loading="lazy">');
+    t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, a, u) => '<a href="' + safeUrl(u.replace(/&amp;/g, "&")) + '"' + (/^https?:/i.test(u) ? ' rel="noopener"' : "") + ">" + a + "</a>");
+    t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+    return t.replace(/\u0000(\d+)\u0000/g, (_, i) => "<code>" + esc(codes[+i]) + "</code>");
+  }
+  function md(src) {
+    const L = src.replace(/\r\n?/g, "\n").split("\n"), out = []; let i = 0;
+    while (i < L.length) {
+      const ln = L[i];
+      if (/^```/.test(ln)) { const buf = []; i++; while (i < L.length && !/^```/.test(L[i])) buf.push(L[i++]); i++; out.push("<pre><code>" + esc(buf.join("\n")) + "</code></pre>"); continue; }
+      let m;
+      if ((m = ln.match(/^(#{1,3})\s+(.*)$/))) { const n = m[1].length >= 3 ? 3 : 2; out.push("<h" + n + ">" + inline(m[2]) + "</h" + n + ">"); i++; continue; }
+      if (/^(-{3,}|\*{3,})\s*$/.test(ln)) { out.push("<hr>"); i++; continue; }
+      if (/^>\s?/.test(ln)) { const buf = []; while (i < L.length && /^>\s?/.test(L[i])) buf.push(L[i++].replace(/^>\s?/, "")); out.push("<blockquote><p>" + inline(buf.join(" ")) + "</p></blockquote>"); continue; }
+      if (/^\s*[-*]\s+/.test(ln)) { const buf = []; while (i < L.length && /^\s*[-*]\s+/.test(L[i])) buf.push("<li>" + inline(L[i++].replace(/^\s*[-*]\s+/, "")) + "</li>"); out.push("<ul>" + buf.join("") + "</ul>"); continue; }
+      if (/^\s*\d+\.\s+/.test(ln)) { const buf = []; while (i < L.length && /^\s*\d+\.\s+/.test(L[i])) buf.push("<li>" + inline(L[i++].replace(/^\s*\d+\.\s+/, "")) + "</li>"); out.push("<ol>" + buf.join("") + "</ol>"); continue; }
+      if (!ln.trim()) { i++; continue; }
+      const buf = []; while (i < L.length && L[i].trim() && !/^(```|#{1,3}\s|>\s?|\s*[-*]\s+|\s*\d+\.\s+)/.test(L[i])) buf.push(L[i++]);
+      out.push("<p>" + inline(buf.join(" ")) + "</p>");
+    }
+    return out.join("\n");
+  }
+
+  const slug = (new URLSearchParams(location.search).get("p") || "").replace(/[^a-z0-9-_]/gi, "");
+  const box = $("#post");
+  const fail = (msg) => { box.innerHTML = '<p class="empty">' + msg + "</p>"; };
+  if (!slug) { fail("No note selected. Pick one from the field notes list."); return; }
+  fetch("posts/posts.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : [])).catch(() => []).then((list) => {
+    const meta = (Array.isArray(list) ? list : []).find((p) => p && p.slug === slug);
+    if (!meta) { fail("That note is not filed. Pick one from the field notes list."); return; }
+    return fetch("posts/" + slug + ".md", { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(); return r.text(); }).then((text) => {
+      document.title = meta.title + " | Parneet Kaur";
+      const d = $('meta[name="description"]'); if (d && meta.summary) d.setAttribute("content", meta.summary);
+      text = text.replace(/^\s*#\s+.*\n/, "");
+      const dt = meta.date ? new Date(meta.date + "T00:00:00") : null;
+      const when = dt && !isNaN(dt) ? dt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
+      const head = document.createElement("header"), mt = document.createElement("div"); mt.className = "meta";
+      if (when) { const t = document.createElement("time"); t.dateTime = meta.date; t.textContent = when; mt.appendChild(t); }
+      if (meta.minutes) { const s = document.createElement("span"); s.textContent = meta.minutes + " min read"; mt.appendChild(s); }
+      (meta.tags || []).slice(0, 4).forEach((g) => { const s = document.createElement("span"); s.className = "stamp"; s.textContent = g; mt.appendChild(s); });
+      const h1 = document.createElement("h1"); h1.textContent = meta.title;
+      head.appendChild(mt); head.appendChild(h1);
+      if (meta.summary) { const p = document.createElement("p"); p.className = "lede"; p.textContent = meta.summary; head.appendChild(p); }
+      const body = document.createElement("div"); body.className = "prose"; body.innerHTML = md(text);
+      box.textContent = ""; box.appendChild(head); box.appendChild(body);
+      document.fonts && document.fonts.ready && document.fonts.ready.then(onScroll);
+    }).catch(() => fail("This note's text could not be loaded. Try again in a minute."));
+  });
+})();
+</script>
+</body>
+</html>

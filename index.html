@@ -143,6 +143,20 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
 .res{font:700 .86rem/1.4 var(--type);margin:8px 0 10px;color:var(--paper)}
 .res b{display:block;font-family:var(--disp);font-size:.98rem;font-weight:800}
 
+/* notes */
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:48px 28px;align-items:start}
+.note{padding-top:30px}
+.note .tent{display:none}
+.note time{display:block;font:700 .82rem/1 var(--type);color:var(--paperfine);margin-bottom:10px}
+.note h3 a{text-decoration:none}
+.note h3 a::after{content:"";position:absolute;inset:0;z-index:5}
+.note .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.note .stamp{color:#4b2fb0;font-size:.68rem}
+.note .more{display:inline-block;margin-top:14px;font:700 .9rem/1 var(--disp);border-bottom:2px solid var(--paper)}
+.note-empty{display:flex;gap:20px;align-items:center;padding:30px clamp(20px,3vw,34px);border:2px dashed rgba(255,210,63,.45);border-radius:10px;max-width:640px}
+.note-empty p{color:var(--muted);font-size:1.02rem}
+.note-empty strong{display:block;color:var(--text);font:800 1.2rem/1.2 var(--disp);font-stretch:108%;margin-bottom:4px}
+
 /* kit */
 .kit{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .kit div{padding:26px 24px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(201,178,255,.05),transparent)}
@@ -162,12 +176,12 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
 
 @media(max-width:960px){
   .case{grid-template-columns:1fr}
-  .cards,.exh{grid-template-columns:1fr 1fr}
+  .cards,.exh,.notes{grid-template-columns:1fr 1fr}
   .card.span2{grid-column:span 2}
   .kit{grid-template-columns:1fr}.kit div{border-right:0;border-bottom:1px solid var(--line)}.kit div:last-child{border-bottom:0}
 }
 @media(max-width:640px){
-  .cards,.exh{grid-template-columns:1fr}.card.span2{grid-column:auto}
+  .cards,.exh,.notes{grid-template-columns:1fr}.card.span2{grid-column:auto}
   .hud p{max-width:21ch;font-size:.84rem}
   .hud button{padding:12px 16px;font-size:.84rem}
   .ent{grid-template-columns:1fr auto;gap:4px 12px;padding-left:24px}
@@ -188,7 +202,7 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
 <div class="progress" id="progress" aria-hidden="true"></div>
 <nav class="nav" id="nav" aria-label="Sections">
   <a class="mk" href="#hero" aria-label="Top">PK</a>
-  <a href="#case">Summary</a><a href="#board">Board</a><a href="#demo">Demo</a><a href="#custody">Custody</a><a href="#finals">Finals</a><a href="#contact">Contact</a>
+  <a href="#case">Summary</a><a href="#board">Board</a><a href="#demo">Demo</a><a href="#custody">Custody</a><a href="#finals">Finals</a><a href="#notes">Notes</a><a href="#contact">Contact</a>
 </nav>
 
 <header class="hero" id="hero">
@@ -358,6 +372,15 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
         <div class="res"><b>SAP Hackfest North Region 2026, finale round</b>Team lead</div>
         <p>An inclusive workforce intelligence platform, taken to the grand finale round.</p>
       </article>
+    </div>
+  </div>
+</section>
+
+<section id="notes">
+  <div class="wrap">
+    <div class="sec-head"><h2>Field notes</h2><p class="sec-note">Write-ups on hardware security, digital forensics and what I am learning in the lab.</p></div>
+    <div class="notes" id="notelist" aria-live="polite">
+      <div class="note-empty"><span class="tent" aria-hidden="true">?</span><p><strong>Nothing filed yet.</strong>The first notes are being written.</p></div>
     </div>
   </div>
 </section>
@@ -731,6 +754,27 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
     let rz2; addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(() => { size(); draw(); }, 120); });
     gen(); size(); draw();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  })();
+
+  /* ---------- Field notes (posts/posts.json) ---------- */
+  (function notes() {
+    const box = $("#notelist"); if (!box) return;
+    fetch("posts/posts.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : [])).catch(() => []).then((list) => {
+      if (!Array.isArray(list) || !list.length) return;
+      list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+      box.textContent = "";
+      list.slice(0, 6).forEach((p) => {
+        if (!p || !p.slug || !p.title) return;
+        const el = document.createElement("article"); el.className = "card note";
+        const pin = document.createElement("span"); pin.className = "pin"; el.appendChild(pin);
+        if (p.date) { const t = document.createElement("time"); t.dateTime = p.date; const d = new Date(p.date + "T00:00:00"); t.textContent = isNaN(d) ? p.date : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) + (p.minutes ? " / " + p.minutes + " min read" : ""); el.appendChild(t); }
+        const h = document.createElement("h3"), a = document.createElement("a"); a.href = "post.html?p=" + encodeURIComponent(p.slug); a.textContent = p.title; h.appendChild(a); el.appendChild(h);
+        if (p.summary) { const s = document.createElement("p"); s.textContent = p.summary; el.appendChild(s); }
+        if (Array.isArray(p.tags) && p.tags.length) { const w = document.createElement("div"); w.className = "tags"; p.tags.slice(0, 4).forEach((g) => { const b = document.createElement("span"); b.className = "stamp"; b.textContent = g; w.appendChild(b); }); el.appendChild(w); }
+        const m = document.createElement("span"); m.className = "more"; m.setAttribute("aria-hidden", "true"); m.textContent = "Read the note"; el.appendChild(m);
+        box.appendChild(el);
+      });
+    });
   })();
 
   /* ---------- Chain of custody reveal ---------- */
