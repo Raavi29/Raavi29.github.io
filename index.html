@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Parneet Kaur, hardware security</title>
 <meta name="description" content="Parneet Kaur: hardware security and digital forensics. Secure element analysis at IIT Bhilai, a ransomware review presented at IJCACI 2026, open source at IIT Ropar and OWASP Nettacker.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23082a22'/%3E%3Crect x='8' y='8' width='16' height='16' fill='none' stroke='%23d9b45a' stroke-width='3'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%23ff4d2e'/%3E%3C/svg%3E">
+<meta property="og:title" content="Parneet Kaur, hardware security">
+<meta property="og:description" content="Secure element analysis, ransomware forensics and open source. Move your cursor over the die.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -134,6 +137,29 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
 .links a:hover { background: var(--mask); color: var(--gold); }
 .foot { font-family: var(--mono); font-size: 12px; }
 
+
+/* Topbar */
+.topbar { position: fixed; top: 3px; left: 0; right: 0; z-index: 40; display: flex; flex-wrap: wrap; gap: 4px 24px; padding: 10px 28px; background: rgba(8,42,34,.94); border-bottom: 1px solid var(--line); font-weight: 500; font-size: 14px; transform: translateY(-120%); visibility: hidden; transition: transform .25s ease-out, visibility 0s .25s; }
+.topbar.show { transform: none; visibility: visible; transition: transform .25s ease-out; }
+.topbar a { text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+.topbar a:hover { border-color: var(--gold); }
+.topbar .brand { font-family: var(--mono); color: var(--gold); font-weight: 700; margin-right: auto; }
+
+/* Power analysis demo */
+.demo { border: 1px solid var(--line); background: #041a15; padding: 24px; }
+.demo-bar { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
+.demo-bar label { font-family: var(--mono); font-size: 13px; display: flex; gap: 10px; align-items: baseline; }
+.demo-bar output { color: var(--gold); font-weight: 700; display: inline-block; min-width: 3ch; }
+.demo-bar input[type=range] { flex: 1 1 240px; accent-color: var(--gold); height: 28px; }
+.btn { font-family: var(--display); font-weight: 800; font-size: 1.15rem; text-transform: uppercase; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 5px 18px; cursor: pointer; }
+.btn:hover { background: var(--gold); color: var(--mask); }
+.btn.primary { background: var(--gold); color: var(--mask); }
+.btn.primary:hover { background: var(--silk); border-color: var(--silk); }
+#cpa { display: block; width: 100%; }
+.cpa-read { font-family: var(--mono); font-size: 14px; line-height: 1.6; margin: 16px 0 8px; min-height: 3.4em; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--dim); margin: 0 0 10px; }
+.legend i { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; }
+
 @media (max-width: 900px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat:nth-child(2) { border-right: 0; }
@@ -144,6 +170,7 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
   .tp { grid-template-columns: 1fr; }
   .tp .desc { grid-column: auto; }
   .hint { display: none; }
+  .topbar { padding: 8px 20px; gap: 2px 16px; font-size: 13px; }
   h1 { font-size: clamp(3.6rem, 16vw, 9rem); }
   .nav { gap: 6px 18px; font-size: 14px; }
   .hero-ui { padding: 18px 20px 24px; }
@@ -161,6 +188,7 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
 </head>
 <body>
 <div class="progress" id="progress" aria-hidden="true"></div>
+<nav class="topbar" id="topbar" aria-label="Quick links"><a class="brand" href="#hero">PK</a><a href="#research">Research</a><a href="#demo">Demo</a><a href="#log">Log</a><a href="#tests">Competitions</a><a href="#contact">Contact</a></nav>
 
 <header class="hero" id="hero">
   <canvas id="die" tabindex="0" role="img" aria-label="Interactive illustration of a chip die. Move the pointer or use arrow keys to x-ray the die under a probe. Red marks stand for confirmed findings."></canvas>
@@ -168,6 +196,7 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
     <nav class="nav" aria-label="Sections">
       <a class="brand" href="#hero">PK</a>
       <a href="#research">Research</a>
+      <a href="#demo">Demo</a>
       <a href="#log">Log</a>
       <a href="#tests">Competitions</a>
       <a href="#contact">Contact</a>
@@ -255,6 +284,24 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
         <p><b>GirlScript Summer of Code.</b> Contributor.</p>
       </article>
 
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="sec-head"><h2>Break a key</h2><p class="sec-note">A simulated power-analysis attack, the technique I am learning on the ChipWhisperer. Add power traces and watch the secret key byte stand out from 255 wrong guesses.</p></div>
+    <div class="demo">
+      <div class="demo-bar">
+        <label for="ntr">Traces captured <output id="ntrout" for="ntr">30</output></label>
+        <input type="range" id="ntr" min="5" max="400" value="30" aria-describedby="cpa-read">
+        <button class="btn primary" id="run" type="button">Run the attack</button>
+        <button class="btn" id="newkey" type="button">New secret key</button>
+      </div>
+      <p class="legend"><span><i style="background:#d9b45a"></i>real key byte</span><span><i style="background:#ff4d2e"></i>attacker's best guess</span><span><i style="background:rgba(241,243,235,.4)"></i>other guesses</span><span>Each bar is one of the 256 possible key bytes. Height is how well that guess matches the power readings.</span></p>
+      <canvas id="cpa" role="img" aria-label="Bar chart of correlation for each of the 256 key byte guesses. The real key byte is highlighted in gold."></canvas>
+      <p class="cpa-read" id="cpa-read" aria-live="polite"></p>
+      <p class="fine">Simulated leakage: the Hamming weight of an AES S-box output plus random noise. It uses no data from any real device and none from my lab work.</p>
     </div>
   </div>
 </section>
@@ -644,6 +691,121 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
       p.addEventListener("pointerleave", () => { p.style.transform = ""; });
     });
   }
+
+  /* ---------- Topbar ---------- */
+  const topbar = document.getElementById("topbar");
+  const toggleBar = () => topbar.classList.toggle("show", window.scrollY > hero.offsetHeight * 0.85);
+  window.addEventListener("scroll", toggleBar, { passive: true });
+  toggleBar();
+
+  /* ---------- Power analysis demo (simulated) ---------- */
+  (function () {
+    const cvs = document.getElementById("cpa");
+    if (!cvs) return;
+    const g2 = cvs.getContext("2d");
+    const slider = document.getElementById("ntr"), out = document.getElementById("ntrout"), read = document.getElementById("cpa-read");
+    const runBtn = document.getElementById("run"), keyBtn = document.getElementById("newkey");
+    const rotl = (x, n) => ((x << n) | (x >> (8 - n))) & 0xff;
+    const SB = new Uint8Array(256);
+    (function () {
+      let p = 1, q = 1;
+      do {
+        p = (p ^ (p << 1) ^ ((p & 0x80) ? 0x11b : 0)) & 0xff;
+        q = (q ^ (q << 1)) & 0xff; q = (q ^ (q << 2)) & 0xff; q = (q ^ (q << 4)) & 0xff;
+        if (q & 0x80) q ^= 0x09;
+        q &= 0xff;
+        SB[p] = (q ^ rotl(q, 1) ^ rotl(q, 2) ^ rotl(q, 3) ^ rotl(q, 4)) ^ 0x63;
+      } while (p !== 1);
+      SB[0] = 0x63;
+    })();
+    const HW = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) { let c = 0, x = i; while (x) { c += x & 1; x >>= 1; } HW[i] = c; }
+    const NMAX = 400, SIGMA = 3.5;
+    let seed = 20261121, key = 0, P = [], Lk = [], dpr2 = 1, runId = 0;
+    const hex = (v) => "0x" + v.toString(16).toUpperCase().padStart(2, "0");
+
+    function gen() {
+      const r = mulberry32(seed);
+      key = Math.floor(r() * 256); P = []; Lk = [];
+      const gauss = () => { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * r()); };
+      for (let i = 0; i < NMAX; i++) { const p = Math.floor(r() * 256); P.push(p); Lk.push(HW[SB[p ^ key]] + SIGMA * gauss()); }
+    }
+    function corr(n) {
+      let lm = 0; for (let i = 0; i < n; i++) lm += Lk[i]; lm /= n;
+      let dl = 0; for (let i = 0; i < n; i++) dl += (Lk[i] - lm) * (Lk[i] - lm);
+      const res = new Float64Array(256), h = new Float64Array(n);
+      for (let g = 0; g < 256; g++) {
+        let sh = 0; for (let i = 0; i < n; i++) { h[i] = HW[SB[P[i] ^ g]]; sh += h[i]; }
+        const hm = sh / n; let num = 0, dh = 0;
+        for (let i = 0; i < n; i++) { const a = h[i] - hm; num += a * (Lk[i] - lm); dh += a * a; }
+        res[g] = Math.abs(num / Math.sqrt((dh * dl) || 1));
+      }
+      return res;
+    }
+    function size() {
+      const w = cvs.parentElement.clientWidth - 48, h = w < 560 ? 230 : 290;
+      dpr2 = Math.min(2, window.devicePixelRatio || 1);
+      cvs.style.width = w + "px"; cvs.style.height = h + "px";
+      cvs.width = Math.round(w * dpr2); cvs.height = Math.round(h * dpr2);
+    }
+    function draw() {
+      const n = +slider.value; out.textContent = n;
+      const res = corr(n);
+      let best = 0, rank = 1;
+      for (let g = 1; g < 256; g++) if (res[g] > res[best]) best = g;
+      for (let g = 0; g < 256; g++) if (res[g] > res[key]) rank++;
+      const W2 = cvs.width / dpr2, H2 = cvs.height / dpr2;
+      g2.setTransform(dpr2, 0, 0, dpr2, 0, 0); g2.clearRect(0, 0, W2, H2);
+      const L = 40, B = 28, T = 22, Rr = 8, pw = W2 - L - Rr, ph = H2 - B - T, bw = pw / 256;
+      let mx = 0; for (let g = 0; g < 256; g++) if (res[g] > mx) mx = res[g];
+      const max = Math.max(.4, mx * 1.15);
+      g2.font = "11px JetBrains Mono, monospace"; g2.textAlign = "right"; g2.textBaseline = "middle";
+      for (let t = 0; t <= max + 1e-9; t += .1) {
+        const y = T + ph - (t / max) * ph;
+        g2.strokeStyle = "rgba(241,243,235,.12)"; g2.beginPath(); g2.moveTo(L, y); g2.lineTo(L + pw, y); g2.stroke();
+        g2.fillStyle = "rgba(241,243,235,.6)"; g2.fillText(t.toFixed(1), L - 8, y);
+      }
+      for (let g = 0; g < 256; g++) {
+        const hgt = (res[g] / max) * ph;
+        g2.fillStyle = g === key ? "#d9b45a" : (g === best ? "#ff4d2e" : "rgba(241,243,235,.4)");
+        g2.fillRect(L + g * bw, T + ph - hgt, Math.max(1, bw - .5), hgt);
+      }
+      g2.textAlign = "center"; g2.textBaseline = "top"; g2.fillStyle = "rgba(241,243,235,.6)";
+      [["00", 0], ["40", 64], ["80", 128], ["C0", 192], ["FF", 255]].forEach((a) => g2.fillText("0x" + a[0], L + a[1] * bw + bw / 2, T + ph + 8));
+      g2.textBaseline = "bottom";
+      const lab = (g, txt, col) => {
+        const x = Math.min(L + pw - 36, Math.max(L + 36, L + g * bw + bw / 2)), y = T + ph - (res[g] / max) * ph - 4;
+        g2.fillStyle = col; g2.fillText(txt, x, Math.max(14, y));
+      };
+      g2.font = "700 12px JetBrains Mono, monospace";
+      if (best !== key) lab(best, "guess " + hex(best), "#ff4d2e");
+      lab(key, "key " + hex(key), "#d9b45a");
+      read.textContent = best === key
+        ? "With " + n + " traces the top guess is " + hex(best) + ", which is the real key byte. Recovered."
+        : "With " + n + " traces the top guess is " + hex(best) + ", but the real key byte is " + hex(key) + ", ranked " + rank + " of 256. Add traces.";
+    }
+    slider.addEventListener("input", () => { runId++; draw(); });
+    keyBtn.addEventListener("click", () => { runId++; seed += 7919; gen(); slider.value = 10; draw(); });
+    runBtn.addEventListener("click", () => {
+      const id = ++runId;
+      if (reduce) { slider.value = NMAX; draw(); return; }
+      const a = performance.now(), from = 5, dur = 5500;
+      slider.value = from;
+      const step = (now) => {
+        if (id !== runId) return;
+        const p = clamp((now - a) / dur, 0, 1);
+        slider.value = Math.round(from + (NMAX - from) * (1 - Math.pow(1 - p, 2)));
+        draw();
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    let rz2;
+    window.addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(() => { size(); draw(); }, 120); });
+    gen(); size(); draw();
+    const fontsReady = document.fonts && document.fonts.ready;
+    if (fontsReady) fontsReady.then(() => draw());
+  })();
 
   /* ---------- Boot log ---------- */
   const lb = document.getElementById("logbox");
