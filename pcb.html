@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parneet Kaur, hardware security</title>
+<meta name="description" content="Parneet Kaur: hardware security and digital forensics. Secure element analysis at IIT Bhilai, a ransomware review presented at IJCACI 2026, open source at IIT Ropar and OWASP Nettacker.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23082a22'/%3E%3Crect x='8' y='8' width='16' height='16' fill='none' stroke='%23d9b45a' stroke-width='3'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%23ff4d2e'/%3E%3C/svg%3E">
+<meta property="og:title" content="Parneet Kaur, hardware security">
+<meta property="og:description" content="Secure element analysis, ransomware forensics and open source. Move your cursor over the die.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: the whole site is one circuit board. A decap-able die opens it (cursor = probe),
+   panels are components with pin-1 marks and reference designators, the timeline is a boot log. */
+:root {
+  --mask: #082a22;
+  --mask-2: #0d3a2f;
+  --mask-3: #14503f;
+  --gold: #d9b45a;
+  --silk: #f1f3eb;
+  --probe: #ff4d2e;
+  --dim: rgba(241, 243, 235, 0.7);
+  --line: rgba(241, 243, 235, 0.22);
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--mask); }
+body { margin: 0; background: var(--mask); color: var(--silk); font-family: var(--body); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
+.progress { position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--gold); transform-origin: 0 50%; transform: scaleX(0); z-index: 50; }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; height: min(100svh, 980px); min-height: 640px; overflow: hidden; border-bottom: 1px solid var(--line); }
+#die { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: pan-y; }
+.hero-ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 24px 28px 28px; }
+.nav { display: flex; flex-wrap: wrap; gap: 8px 28px; font-weight: 500; font-size: 15px; pointer-events: auto; }
+.nav a { text-decoration: none; padding: 4px 0; border-bottom: 1px solid transparent; }
+.nav a:hover { border-color: var(--gold); }
+.nav .brand { font-family: var(--mono); color: var(--gold); margin-right: auto; font-weight: 700; }
+.hero-bottom { display: flex; flex-direction: column; gap: 18px; max-width: 760px; }
+.tag { font-size: clamp(1.05rem, 1.6vw, 1.35rem); max-width: 26em; margin: 0; text-wrap: balance; text-shadow: 0 2px 18px var(--mask); }
+h1 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(5rem, 16.5vw, 15.5rem); line-height: .82; letter-spacing: -.01em; text-transform: uppercase; text-shadow: 0 4px 40px rgba(8,42,34,.8); }
+h1 span { display: block; }
+h1 .k { color: var(--gold); }
+.hint { position: absolute; right: 28px; bottom: 28px; max-width: 300px; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--dim); text-align: right; }
+.hint b { color: var(--probe); font-weight: 700; }
+
+/* ---------- Marquee ---------- */
+.band { background: var(--gold); color: var(--mask); overflow: hidden; white-space: nowrap; border-block: 1px solid var(--mask); }
+.band-track { display: inline-flex; animation: roll 46s linear infinite; }
+.band span { font-family: var(--display); font-weight: 800; font-size: 1.5rem; letter-spacing: .02em; text-transform: uppercase; padding: 10px 0; }
+.band i { display: inline-block; width: 10px; height: 10px; margin: 0 26px; background: var(--mask); transform: rotate(45deg); }
+@keyframes roll { to { transform: translateX(-50%); } }
+
+/* ---------- Sections ---------- */
+section { padding: 96px 0 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 24px; margin-bottom: 36px; }
+h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(3rem, 8vw, 6.5rem); line-height: .9; text-transform: uppercase; letter-spacing: -.005em; }
+.sec-note { margin: 0; color: var(--dim); max-width: 34em; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
+.stat { padding: 28px 24px 24px; border-right: 1px solid var(--line); }
+.stat:last-child { border-right: 0; }
+.stat b { display: block; font-family: var(--display); font-weight: 900; font-size: clamp(4rem, 9vw, 8rem); line-height: .9; color: var(--gold); font-variant-numeric: tabular-nums; }
+.stat span { display: block; margin-top: 10px; color: var(--dim); max-width: 16em; }
+
+/* Panels (components) */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; perspective: 1200px; }
+.span2 { grid-column: 1 / -1; }
+.panel { position: relative; background: linear-gradient(160deg, var(--mask-2), var(--mask)); border: 1px solid var(--line); padding: 40px 34px 34px; transform-style: preserve-3d; transition: transform .25s ease-out, border-color .25s; will-change: transform; overflow: hidden; }
+.panel::before { content: ""; position: absolute; left: 12px; top: 12px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--gold); }
+.panel::after { content: ""; position: absolute; inset: 0; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(217,180,90,.16), transparent 60%); opacity: 0; transition: opacity .25s; pointer-events: none; }
+.panel:hover { border-color: var(--gold); }
+.panel:hover::after { opacity: 1; }
+.ref { position: absolute; right: 16px; top: 12px; font-family: var(--mono); font-size: 12px; color: var(--gold); font-weight: 700; }
+.chip { display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 3px 10px; background: var(--gold); color: var(--mask); margin-bottom: 14px; }
+.chip.live { background: var(--probe); color: #1b0a06; }
+.chip.dim { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size: clamp(2rem, 3.4vw, 3rem); line-height: .98; text-wrap: balance; }
+.panel p { margin: 0 0 12px; max-width: 38em; color: #dfe6dc; }
+.panel p:last-child { margin-bottom: 0; }
+.who { font-family: var(--mono); font-size: 13px; color: var(--dim); }
+.fine { font-size: 14px; color: var(--dim); }
+
+/* Method trace inside the featured panel */
+.flow { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 28px 0 8px; padding: 0; counter-reset: none; }
+.flow li { position: relative; padding: 18px 14px 0 0; font-size: 15px; line-height: 1.4; }
+.flow li::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 2px; background: var(--gold); }
+.flow li::after { content: ""; position: absolute; left: 0; top: -5px; width: 12px; height: 12px; background: var(--mask); border: 2px solid var(--gold); }
+.flow li b { display: block; font-family: var(--display); font-size: 1.35rem; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
+.flow li.next::before { background: repeating-linear-gradient(90deg, var(--probe) 0 8px, transparent 8px 14px); }
+.flow li.next::after { border-color: var(--probe); }
+.flow li.next b { color: var(--probe); }
+
+/* Boot log */
+.log { background: #041a15; border: 1px solid var(--line); padding: 26px 28px; font-family: var(--mono); font-size: 14px; line-height: 1.9; overflow-x: auto; }
+.log div { display: grid; grid-template-columns: 62px 112px minmax(0, 1fr); gap: 0 14px; white-space: normal; }
+.log .ok { color: #8fd6a8; }
+.log .run { color: var(--probe); }
+.log .todo { color: var(--dim); }
+.log .ts { color: var(--gold); }
+.log.armed div { opacity: 0; transform: translateX(-10px); }
+.log.armed.play div { animation: line .45s ease-out forwards; animation-delay: calc(var(--i) * 90ms); }
+@keyframes line { to { opacity: 1; transform: none; } }
+
+/* Test point rows */
+.tp { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 280px); gap: 6px 28px; align-items: center; padding: 26px 20px; border-top: 1px solid var(--line); transition: background .2s, color .2s; }
+.tp:last-child { border-bottom: 1px solid var(--line); }
+.tp:hover { background: var(--gold); color: var(--mask); }
+.tp .id { font-family: var(--mono); font-weight: 700; color: var(--gold); transition: color .2s; }
+.tp:hover .id { color: var(--mask); }
+.tp h3 { font-size: clamp(2.6rem, 7vw, 6rem); line-height: .88; margin: 0; text-transform: uppercase; }
+.tp .res { font-family: var(--mono); font-size: 13px; }
+.tp .res b { display: block; font-size: 14px; margin-bottom: 4px; }
+.tp .desc { grid-column: 2 / 3; margin: 0; max-width: 36em; opacity: .85; }
+
+/* Tools */
+.kit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.kit div { border-top: 2px solid var(--gold); padding-top: 14px; }
+.kit h4 { margin: 0 0 6px; font-family: var(--display); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
+.kit p { margin: 0; color: #dfe6dc; }
+
+/* Contact */
+.contact { margin-top: 110px; background: var(--gold); color: var(--mask); padding: 70px 0 40px; }
+.contact h2 { font-size: clamp(3rem, 9vw, 8.5rem); max-width: 11em; }
+.contact p { max-width: 34em; font-size: 1.1rem; margin: 22px 0 0; }
+.links { display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0 44px; padding: 0; list-style: none; }
+.links a { display: inline-block; font-family: var(--display); font-weight: 800; font-size: 1.6rem; text-transform: uppercase; text-decoration: none; padding: 8px 24px; border: 3px solid var(--mask); transition: background .15s, color .15s; }
+.links a:hover { background: var(--mask); color: var(--gold); }
+.foot { font-family: var(--mono); font-size: 12px; }
+
+
+/* Topbar */
+.topbar { position: fixed; top: 3px; left: 0; right: 0; z-index: 40; display: flex; flex-wrap: wrap; gap: 4px 24px; padding: 10px 28px; background: rgba(8,42,34,.94); border-bottom: 1px solid var(--line); font-weight: 500; font-size: 14px; transform: translateY(-120%); visibility: hidden; transition: transform .25s ease-out, visibility 0s .25s; }
+.topbar.show { transform: none; visibility: visible; transition: transform .25s ease-out; }
+.topbar a { text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+.topbar a:hover { border-color: var(--gold); }
+.topbar .brand { font-family: var(--mono); color: var(--gold); font-weight: 700; margin-right: auto; }
+
+/* Power analysis demo */
+.demo { border: 1px solid var(--line); background: #041a15; padding: 24px; }
+.demo-bar { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
+.demo-bar label { font-family: var(--mono); font-size: 13px; display: flex; gap: 10px; align-items: baseline; }
+.demo-bar output { color: var(--gold); font-weight: 700; display: inline-block; min-width: 3ch; }
+.demo-bar input[type=range] { flex: 1 1 240px; accent-color: var(--gold); height: 28px; }
+.btn { font-family: var(--display); font-weight: 800; font-size: 1.15rem; text-transform: uppercase; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 5px 18px; cursor: pointer; }
+.btn:hover { background: var(--gold); color: var(--mask); }
+.btn.primary { background: var(--gold); color: var(--mask); }
+.btn.primary:hover { background: var(--silk); border-color: var(--silk); }
+#cpa { display: block; width: 100%; }
+.cpa-read { font-family: var(--mono); font-size: 14px; line-height: 1.6; margin: 16px 0 8px; min-height: 3.4em; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--dim); margin: 0 0 10px; }
+.legend i { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; }
+
+@media (max-width: 900px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(2) { border-right: 0; }
+  .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .grid { grid-template-columns: 1fr; }
+  .flow { grid-template-columns: 1fr 1fr; gap: 18px 0; }
+  .kit { grid-template-columns: 1fr; }
+  .tp { grid-template-columns: 1fr; }
+  .tp .desc { grid-column: auto; }
+  .hint { display: none; }
+  .topbar { padding: 8px 20px; gap: 2px 16px; font-size: 13px; }
+  h1 { font-size: clamp(3.6rem, 16vw, 9rem); }
+  .nav { gap: 6px 18px; font-size: 14px; }
+  .hero-ui { padding: 18px 20px 24px; }
+  .log div { grid-template-columns: 58px minmax(0, 1fr); }
+  .log div .ts { grid-column: 2; }
+  .log div .tx { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .band-track { animation: none; }
+  .log.armed div { opacity: 1; transform: none; animation: none; }
+  .panel { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<nav class="topbar" id="topbar" aria-label="Quick links"><a class="brand" href="#hero">PK</a><a href="#research">Research</a><a href="#demo">Demo</a><a href="#log">Log</a><a href="#tests">Competitions</a><a href="#contact">Contact</a></nav>
+
+<header class="hero" id="hero">
+  <canvas id="die" tabindex="0" role="img" aria-label="Interactive illustration of a chip die. Move the pointer or use arrow keys to x-ray the die under a probe. Red marks stand for confirmed findings."></canvas>
+  <div class="hero-ui">
+    <nav class="nav" aria-label="Sections">
+      <a class="brand" href="#hero">PK</a>
+      <a href="#research">Research</a>
+      <a href="#demo">Demo</a>
+      <a href="#log">Log</a>
+      <a href="#tests">Competitions</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="hero-bottom">
+      <p class="tag">I test whether secure chips do what their datasheets say. Second-year B.Tech CSE (Cybersecurity), DBS Global University.</p>
+      <h1><span>Parneet</span><span class="k">Kaur</span></h1>
+    </div>
+  </div>
+  <p class="hint">Move over the die. The <b>red marks</b> are my 62 confirmed findings. Illustrative die, not TROPIC01.</p>
+</header>
+
+<div class="band" aria-hidden="true">
+  <div class="band-track">
+    <span>IJCACI 2026 presented<i></i>62 confirmed findings<i></i>IIT Bhilai<i></i>IIT Ropar<i></i>OWASP Nettacker<i></i>Hardware security<i></i>Digital forensics<i></i>SIH 2025 national finalist<i></i></span>
+    <span>IJCACI 2026 presented<i></i>62 confirmed findings<i></i>IIT Bhilai<i></i>IIT Ropar<i></i>OWASP Nettacker<i></i>Hardware security<i></i>Digital forensics<i></i>SIH 2025 national finalist<i></i></span>
+  </div>
+</div>
+
+<main>
+<section aria-label="Numbers">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><b data-count="62">62</b><span>confirmed findings on one secure element</span></div>
+      <div class="stat"><b data-count="11">11</b><span>sequential PIN attempts checked for key destruction</span></div>
+      <div class="stat"><b data-count="4">4</b><span>years of ransomware research reviewed</span></div>
+      <div class="stat"><b data-count="3">3</b><span>hackathon finales reached</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="research">
+  <div class="wrap">
+    <div class="sec-head"><h2>Research</h2><p class="sec-note">Work I would want a reviewer to read first.</p></div>
+    <div class="grid">
+
+      <article class="panel span2" data-tilt>
+        <span class="ref">U1</span>
+        <span class="chip live">In progress</span>
+        <h3>TROPIC01 secure element analysis</h3>
+        <p class="who">de.ci.phe.red Lab, IIT Bhilai / Dr. Dhiman Saha / June 2026 onwards</p>
+        <p>An independent analysis of Tropic Square's TROPIC01 development kit. A datasheet makes claims about what the chip protects. This project tests them against the hardware. It produced 62 confirmed findings and a conformance test suite that I built and delivered to the lab.</p>
+        <ul class="flow">
+          <li><b>USB</b>Descriptor reconnaissance</li>
+          <li><b>SPI</b>Protocol tested against the conformance spec</li>
+          <li><b>Firmware</b>STM32 firmware decompiled in Ghidra</li>
+          <li><b>Keys</b>Mac-and-Destroy checked across 11 PIN attempts</li>
+          <li class="next"><b>Power</b>Analysis with a ChipWhisperer Husky, started</li>
+        </ul>
+        <p class="fine">Code and report are lab-restricted, so there is no public repository.</p>
+      </article>
+
+      <article class="panel" data-tilt>
+        <span class="ref">U2</span>
+        <span class="chip">Presented</span>
+        <h3>Intelligent ransomware defence, reviewed</h3>
+        <p class="who">IJCACI 2026 / with Prof. Merry KP / July 2026</p>
+        <p>A systematic review of machine learning and deep learning ransomware detection across four years of literature, validated in FlareVM and REMnux. It found a gap between detection accuracy and forensic recoverability. RansomGuard starts there.</p>
+        <p class="fine">Accepted and presented. The publishing contract is signed and the paper is not in print yet.</p>
+      </article>
+
+      <article class="panel" data-tilt>
+        <span class="ref">U3</span>
+        <span class="chip live">Early build</span>
+        <h3>RansomGuard</h3>
+        <p class="who">Solo project / architecture phase</p>
+        <p>A ransomware detector that collects forensic evidence at the moment it fires. A spike in file entropy or a process deleting shadow copies triggers a snapshot of the affected files, the process tree and the network state, with a timestamped evidence chain.</p>
+        <p class="fine">Python, watchdog, psutil, scikit-learn, SQLite, Streamlit. Runs only against synthetic ransomware-like behaviour in a sandbox. No benchmark results yet.</p>
+      </article>
+
+      <article class="panel" data-tilt>
+        <span class="ref">U4</span>
+        <span class="chip dim">Private</span>
+        <h3>TrusToken and Rowhammer</h3>
+        <p class="who">IIT Bhilai / June to August 2026</p>
+        <p>Attack and analysis work on a cryptographic USB token built by C-DAC Noida and IIT Bhilai, and a Rowhammer attack implemented in a simulated environment. The token is an industry project, so I keep the details private.</p>
+      </article>
+
+      <article class="panel" data-tilt>
+        <span class="ref">J1</span>
+        <span class="chip dim">Open source</span>
+        <h3>Contributions</h3>
+        <p><b>OWASP Nettacker.</b> One merged pull request. I researched CVE-2025-32756, an existing critical Fortinet FortiVoice flaw, to improve the scanner's detection modules. Applied to GSoC 2026, not selected, still contributing.</p>
+        <p><b>VLED Lab, IIT Ropar.</b> Open Source Intern under Prof. Sudarshan Iyengar, with commits on a live public repository. Runs to the end of December 2026.</p>
+        <p><b>GirlScript Summer of Code.</b> Contributor.</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="sec-head"><h2>Break a key</h2><p class="sec-note">A simulated power-analysis attack, the technique I am learning on the ChipWhisperer. Add power traces and watch the secret key byte stand out from 255 wrong guesses.</p></div>
+    <div class="demo">
+      <div class="demo-bar">
+        <label for="ntr">Traces captured <output id="ntrout" for="ntr">30</output></label>
+        <input type="range" id="ntr" min="5" max="400" value="30" aria-describedby="cpa-read">
+        <button class="btn primary" id="run" type="button">Run the attack</button>
+        <button class="btn" id="newkey" type="button">New secret key</button>
+      </div>
+      <p class="legend"><span><i style="background:#d9b45a"></i>real key byte</span><span><i style="background:#ff4d2e"></i>attacker's best guess</span><span><i style="background:rgba(241,243,235,.4)"></i>other guesses</span><span>Each bar is one of the 256 possible key bytes. Height is how well that guess matches the power readings.</span></p>
+      <canvas id="cpa" role="img" aria-label="Bar chart of correlation for each of the 256 key byte guesses. The real key byte is highlighted in gold."></canvas>
+      <p class="cpa-read" id="cpa-read" aria-live="polite"></p>
+      <p class="fine">Simulated leakage: the Hamming weight of an AES S-box output plus random noise. It uses no data from any real device and none from my lab work.</p>
+    </div>
+  </div>
+</section>
+
+<section id="log">
+  <div class="wrap">
+    <div class="sec-head"><h2>Boot log</h2><p class="sec-note">What has happened since I started the degree, and what is scheduled.</p></div>
+    <div class="log" id="logbox" role="list">
+      <div class="l ok" role="listitem" style="--i:0"><span>[ OK ]</span><span class="ts">2023</span><span class="tx">Silver Award, Queen's Commonwealth Essay Competition</span></div>
+      <div class="l ok" role="listitem" style="--i:1"><span>[ OK ]</span><span class="ts">2025-08</span><span class="tx">Class Representative, DBS Global University</span></div>
+      <div class="l ok" role="listitem" style="--i:2"><span>[ OK ]</span><span class="ts">2025</span><span class="tx">Smart India Hackathon national finalist at IIIT Dharwad (GreenLight)</span></div>
+      <div class="l ok" role="listitem" style="--i:3"><span>[ OK ]</span><span class="ts">2026-01</span><span class="tx">PR and Social Media Head, Phoenix Media Club. GeeksforGeeks Campus Mantri until July</span></div>
+      <div class="l ok" role="listitem" style="--i:4"><span>[ OK ]</span><span class="ts">2026-06</span><span class="tx">Research Intern, de.ci.phe.red Lab, IIT Bhilai (to August)</span></div>
+      <div class="l run" role="listitem" style="--i:5"><span>[ .. ]</span><span class="ts">2026-06</span><span class="tx">Open Source Intern, VLED Lab, IIT Ropar (still running)</span></div>
+      <div class="l ok" role="listitem" style="--i:6"><span>[ OK ]</span><span class="ts">2026-06</span><span class="tx">CRO Consumer Rights Organisation, social work internship (to July)</span></div>
+      <div class="l ok" role="listitem" style="--i:7"><span>[ OK ]</span><span class="ts">2026-07</span><span class="tx">IJCACI 2026, ransomware review presented</span></div>
+      <div class="l ok" role="listitem" style="--i:8"><span>[ OK ]</span><span class="ts">2026-09</span><span class="tx">Arduino Edge AI Bootcamp completed</span></div>
+      <div class="l ok" role="listitem" style="--i:9"><span>[ OK ]</span><span class="ts">2026-10</span><span class="tx">Cisco Cybersecurity Defense Analyst pathway completed</span></div>
+      <div class="l run" role="listitem" style="--i:10"><span>[ .. ]</span><span class="ts">2026-11</span><span class="tx">Google Gemini Student Ambassador, semester 2. TROPIC01 power analysis. RansomGuard architecture</span></div>
+      <div class="l todo" role="listitem" style="--i:11"><span>[ -- ]</span><span class="ts">2026-12</span><span class="tx">VLED Lab internship ends on the 31st</span></div>
+      <div class="l todo" role="listitem" style="--i:12"><span>[ -- ]</span><span class="ts">2027</span><span class="tx">Summer research placement, hardware security and digital forensics</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="tests">
+  <div class="wrap">
+    <div class="sec-head"><h2>Competitions</h2><p class="sec-note">Team projects built against a deadline.</p></div>
+    <div>
+      <article class="tp">
+        <span class="id">TP1</span>
+        <h3>Saheli</h3>
+        <div class="res"><b>CII Yi Yuva National Grand Finale 2026</b>Team lead</div>
+        <p class="desc">A WhatsApp-first labour marketplace for homebound women to take contracts from small businesses. Trust scores, UPI payouts and Hindi voice input.</p>
+      </article>
+      <article class="tp">
+        <span class="id">TP2</span>
+        <h3>GreenLight</h3>
+        <div class="res"><b>Smart India Hackathon 2025 national finalist, IIIT Dharwad</b>Primary presenter</div>
+        <p class="desc">Intelligent traffic optimisation, tested with SUMO simulations on Linux. I presented it to the jury.</p>
+      </article>
+      <article class="tp">
+        <span class="id">TP3</span>
+        <h3>One True Friend</h3>
+        <div class="res"><b>SAP Hackfest North Region 2026, finale round</b>Team lead</div>
+        <p class="desc">An inclusive workforce intelligence platform, taken to the grand finale round.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="kit">
+  <div class="wrap">
+    <div class="sec-head"><h2>Toolbench</h2><p class="sec-note">CGPA 8.58 after two semesters, no backlogs.</p></div>
+    <div class="kit">
+      <div><h4>Hardware</h4><p>ChipWhisperer Husky, PhyWhisperer USB, SPI analysis, USB forensics, Ghidra.</p></div>
+      <div><h4>Forensics and malware</h4><p>FlareVM and REMnux in a host-only home lab, Wireshark, Nmap. Cisco Defense Analyst pathway with Splunk.</p></div>
+      <div><h4>Code</h4><p>Python, C, C++, Java, JavaScript. React and Node.js for web work. Linux and Git every day.</p></div>
+    </div>
+    <p class="sec-note" style="margin-top:28px">Also: Head of Sponsorships and licensing committee at TEDx DGU, Google Gemini Student Ambassador 2026, District Rank 1 at Vidyarthi Vigyan Manthan.</p>
+  </div>
+</section>
+</main>
+
+<footer class="contact" id="contact">
+  <div class="wrap">
+    <h2>Let's find the flaw together.</h2>
+    <p>I am looking for a research placement in summer 2027 and for collaborations in hardware security and digital forensics. I also take on security engineering work.</p>
+    <ul class="links">
+      <li><a href="mailto:raavi29706@gmail.com">Email</a></li>
+      <li><a href="https://linkedin.com/in/parneet-kaur-forensics">LinkedIn</a></li>
+      <li><a href="https://github.com/Raavi29">GitHub</a></li>
+      <li><a href="https://leetcode.com/u/Raavi29/">LeetCode</a></li>
+    </ul>
+    <p class="foot">raavi29706@gmail.com / Updated November 2026</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canHover = window.matchMedia("(hover: hover)").matches;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const mulberry32 = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+
+  /* ---------- Scroll progress ---------- */
+  const bar = document.getElementById("progress");
+  const onScroll = () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.transform = "scaleX(" + (h > 0 ? window.scrollY / h : 0) + ")";
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- Die model (unit square) ---------- */
+  const BLOCKS = [
+    { n: "FIRMWARE",     x: .12, y: .12, w: .30, h: .26, k: "logic", side: "t" },
+    { n: "SRAM",         x: .46, y: .12, w: .20, h: .26, k: "mem",   side: "t" },
+    { n: "SPI",          x: .70, y: .12, w: .18, h: .14, k: "logic", side: "t" },
+    { n: "PIN COUNTER",  x: .70, y: .30, w: .18, h: .10, k: "logic", side: "r" },
+    { n: "KEY STORE",    x: .12, y: .42, w: .26, h: .22, k: "mem",   side: "l" },
+    { n: "CRYPTO",       x: .42, y: .42, w: .26, h: .22, k: "logic", side: null },
+    { n: "TRNG",         x: .72, y: .44, w: .16, h: .20, k: "logic", side: "r" },
+    { n: "ROM",          x: .12, y: .68, w: .36, h: .20, k: "mem",   side: "b" },
+    { n: "POWER + CLOCK",x: .52, y: .68, w: .36, h: .20, k: "logic", side: "b" }
+  ];
+  const NPAD = 18;
+  const padU = (i) => .1 + .8 * i / (NPAD - 1);
+
+  const routes = [];
+  (function buildRoutes() {
+    const r = mulberry32(21);
+    BLOCKS.forEach((b) => {
+      if (!b.side) return;
+      for (let k = 0; k < 3; k++) {
+        const f = (k + 1) / 4;
+        const jit = Math.round((r() - .5) * 4);
+        if (b.side === "t" || b.side === "b") {
+          const sx = b.x + b.w * f, sy = b.side === "t" ? b.y : b.y + b.h;
+          const pi = clamp(Math.round(((sx - .1) / .8) * (NPAD - 1)) + jit, 0, NPAD - 1);
+          const px = padU(pi);
+          const yj = b.side === "t" ? .098 - r() * .02 : .902 + r() * .02;
+          const py = b.side === "t" ? .066 : .934;
+          routes.push([[sx, sy], [sx, yj], [px, yj], [px, py]]);
+        } else {
+          const sy = b.y + b.h * f, sx = b.side === "l" ? b.x : b.x + b.w;
+          const pi = clamp(Math.round(((sy - .1) / .8) * (NPAD - 1)) + jit, 0, NPAD - 1);
+          const py = padU(pi);
+          const xj = b.side === "l" ? .098 - r() * .02 : .902 + r() * .02;
+          const px = b.side === "l" ? .066 : .934;
+          routes.push([[sx, sy], [xj, sy], [xj, py], [px, py]]);
+        }
+      }
+    });
+    [[.44, .12, .44, .64], [.69, .12, .69, .64], [.10, .40, .90, .40], [.10, .66, .90, .66],
+     [.40, .42, .40, .64], [.12, .395, .88, .395], [.12, .665, .88, .665], [.67, .30, .70, .30]]
+      .forEach((s) => routes.push([[s[0], s[1]], [s[2], s[3]]]));
+    routes.forEach((rt) => {
+      let L = 0; rt.cum = [0];
+      for (let i = 1; i < rt.length; i++) { L += Math.hypot(rt[i][0] - rt[i - 1][0], rt[i][1] - rt[i - 1][1]); rt.cum.push(L); }
+      rt.len = L;
+    });
+  })();
+  const pointAt = (rt, s) => {
+    for (let i = 1; i < rt.length; i++) {
+      if (s <= rt.cum[i]) { const f = (s - rt.cum[i - 1]) / (rt.cum[i] - rt.cum[i - 1] || 1); return [rt[i - 1][0] + (rt[i][0] - rt[i - 1][0]) * f, rt[i - 1][1] + (rt[i][1] - rt[i - 1][1]) * f]; }
+    }
+    return rt[rt.length - 1];
+  };
+
+  const pulses = [];
+  (function () {
+    const r = mulberry32(5);
+    routes.forEach((rt, i) => { for (let k = 0; k < 2; k++) pulses.push({ rt, s: r(), v: (.18 + r() * .28) * (r() > .5 ? 1 : -1) }); });
+  })();
+
+  // 62 findings, placed inside blocks (illustrative)
+  const findings = [];
+  (function () {
+    const r = mulberry32(62);
+    let n = 0;
+    while (findings.length < 62) {
+      const b = BLOCKS[n++ % BLOCKS.length];
+      findings.push({ u: b.x + .015 + r() * (b.w - .03), v: b.y + .03 + r() * (b.h - .045) });
+    }
+  })();
+
+  /* ---------- Canvas ---------- */
+  const cv = document.getElementById("die");
+  const ctx = cv.getContext("2d");
+  const hero = document.getElementById("hero");
+  let W = 0, H = 0, dpr = 1, S = 0, cx = 0, cy = 0, R = 150;
+  let layerA, layerB, tmp, tctx;
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const mapX = (u) => cx - S / 2 + u * S;
+  const mapY = (v) => cy - S / 2 + v * S;
+
+  function drawLayer(c, xr) {
+    const pal = xr
+      ? { die: "#03140f", blk: "#0a3d2f", edge: "#e8c66b", cell: "rgba(232,198,107,.5)", tr: "rgba(255,215,106,.85)", pad: "#ffd76a" }
+      : { die: "#0b2f26", blk: "#0e3b2f", edge: "#1f6150", cell: "rgba(217,180,90,.11)", tr: "rgba(217,180,90,.3)", pad: "#b8933f" };
+    const rnd = mulberry32(7);
+    c.save();
+    // die body
+    c.fillStyle = pal.die; c.fillRect(mapX(0), mapY(0), S, S);
+    c.lineWidth = xr ? 2 : 1.5; c.strokeStyle = pal.edge; c.strokeRect(mapX(0), mapY(0), S, S);
+    c.setLineDash([5, 5]); c.lineWidth = 1; c.strokeRect(mapX(.085), mapY(.085), S * .83, S * .83); c.setLineDash([]);
+    // traces
+    c.strokeStyle = pal.tr; c.lineWidth = xr ? 1.6 : 1; c.lineJoin = "miter";
+    routes.forEach((rt) => { c.beginPath(); rt.forEach((p, i) => { const x = mapX(p[0]), y = mapY(p[1]); i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.stroke(); });
+    // blocks
+    BLOCKS.forEach((b) => {
+      const x = mapX(b.x), y = mapY(b.y), w = b.w * S, h = b.h * S;
+      c.fillStyle = pal.blk; c.fillRect(x, y, w, h);
+      c.strokeStyle = pal.edge; c.lineWidth = xr ? 1.6 : 1; c.strokeRect(x, y, w, h);
+      c.fillStyle = pal.cell; c.strokeStyle = pal.cell;
+      if (b.k === "mem") {
+        const step = Math.max(4, S * .0085);
+        c.lineWidth = 1; c.beginPath();
+        for (let gx = x + step; gx < x + w - 2; gx += step) { c.moveTo(gx, y + 4); c.lineTo(gx, y + h - 4); }
+        for (let gy = y + step; gy < y + h - 2; gy += step) { c.moveTo(x + 4, gy); c.lineTo(x + w - 4, gy); }
+        c.stroke();
+      } else {
+        const rowH = Math.max(4, S * .0075);
+        for (let gy = y + 6; gy < y + h - rowH - 3; gy += rowH + 2) {
+          let gx = x + 6;
+          while (gx < x + w - 10) { const cw = 4 + rnd() * 14; if (rnd() > .28) c.fillRect(gx, gy, Math.min(cw, x + w - 6 - gx), rowH); gx += cw + 2; }
+        }
+      }
+    });
+    // bond pads
+    c.fillStyle = pal.pad; const ps = S * .02;
+    for (let i = 0; i < NPAD; i++) {
+      const u = padU(i);
+      c.fillRect(mapX(u) - ps / 2, mapY(.045) - ps / 2, ps, ps);
+      c.fillRect(mapX(u) - ps / 2, mapY(.955) - ps / 2, ps, ps);
+      c.fillRect(mapX(.045) - ps / 2, mapY(u) - ps / 2, ps, ps);
+      c.fillRect(mapX(.955) - ps / 2, mapY(u) - ps / 2, ps, ps);
+    }
+    if (xr) {
+      const hr = mulberry32(99);
+      c.fillStyle = "rgba(241,243,235,.22)"; c.font = "400 " + Math.max(8, S * .0125) + "px JetBrains Mono, monospace";
+      BLOCKS.forEach((b) => {
+        const x = mapX(b.x), y = mapY(b.y);
+        for (let i = 0; i < 6; i++) {
+          let line = ""; for (let j = 0; j < 9; j++) line += Math.floor(hr() * 256).toString(16).padStart(2, "0") + " ";
+          c.fillText(line, x + 8, y + b.h * S - 8 - i * S * .0165);
+        }
+      });
+      c.textBaseline = "top";
+      BLOCKS.forEach((b) => {
+        c.fillStyle = "#f1f3eb"; c.font = "800 " + Math.max(13, S * .03) + "px Big Shoulders Display, Arial Narrow, sans-serif";
+        c.fillText(b.n, mapX(b.x) + 9, mapY(b.y) + 7);
+      });
+      c.textBaseline = "alphabetic";
+      findings.forEach((f) => {
+        const x = mapX(f.u), y = mapY(f.v), s = Math.max(3.5, S * .0065);
+        c.fillStyle = "#ff4d2e"; c.beginPath(); c.moveTo(x, y - s); c.lineTo(x + s, y); c.lineTo(x, y + s); c.lineTo(x - s, y); c.closePath(); c.fill();
+      });
+    }
+    c.restore();
+  }
+
+  function layout() {
+    const r = hero.getBoundingClientRect();
+    W = Math.round(r.width); H = Math.round(r.height);
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const narrow = W < 820;
+    S = narrow ? Math.min(W * .94, H * .52) : Math.min(H * .86, W * .54);
+    cx = narrow ? W / 2 : W * .69;
+    cy = narrow ? H * .34 : H * .5;
+    R = clamp(S * .22, 90, 190);
+    layerA = mk(W * dpr, H * dpr); layerB = mk(W * dpr, H * dpr);
+    const a = layerA.getContext("2d"), b = layerB.getContext("2d");
+    a.scale(dpr, dpr); b.scale(dpr, dpr);
+    drawLayer(a, false); drawLayer(b, true);
+    tmp = mk(2 * R * dpr, 2 * R * dpr); tctx = tmp.getContext("2d");
+  }
+
+  /* ---------- Probe state ---------- */
+  const probe = { x: 0, y: 0, tx: 0, ty: 0, last: 0, active: false };
+  const t0 = performance.now();
+  let running = false, prev = performance.now();
+
+  function setTarget(clientX, clientY) {
+    const r = hero.getBoundingClientRect();
+    probe.tx = clientX - r.left; probe.ty = clientY - r.top; probe.last = performance.now(); probe.active = true;
+  }
+  hero.addEventListener("pointermove", (e) => setTarget(e.clientX, e.clientY));
+  hero.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") setTarget(e.clientX, e.clientY); });
+  cv.addEventListener("keydown", (e) => {
+    const step = 40, m = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (!m) return;
+    e.preventDefault(); probe.tx = clamp(probe.tx + m[0], 0, W); probe.ty = clamp(probe.ty + m[1], 0, H); probe.last = performance.now(); probe.active = true;
+  });
+
+  function blockAt(u, v) { return BLOCKS.find((b) => u >= b.x && u <= b.x + b.w && v >= b.y && v <= b.y + b.h); }
+
+  function frame(now) {
+    if (!running) return;
+    const dt = Math.min(.05, (now - prev) / 1000); prev = now;
+    const el = (now - t0) / 1000;
+    const intro = reduce ? 1 : clamp(el / 1.4, 0, 1);
+
+    // target: pointer, else a slow scan over the die
+    if (!probe.active || now - probe.last > 4000) {
+      probe.tx = cx + Math.sin(now * .00042) * S * .34;
+      probe.ty = cy + Math.sin(now * .00071 + 1) * S * .3;
+    }
+    const dtMove = Math.min(.25, (now - (frame.last || now)) / 1000); frame.last = now;
+    const k = 1 - Math.exp(-dtMove * (el < 1.8 ? 3.2 : 9));
+    probe.x += (probe.tx - probe.x) * k; probe.y += (probe.ty - probe.y) * k;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(layerA, 0, 0, W, H);
+
+    // pulses
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    pulses.forEach((p) => {
+      if (!reduce) p.s = ((p.s + p.v * dt) % 1 + 1) % 1;
+      const L = p.rt.len;
+      for (let i = 0; i < 6; i++) {
+        const s = (((p.s - Math.sign(p.v) * i * .012) % 1) + 1) % 1;
+        const pt = pointAt(p.rt, s * L);
+        ctx.fillStyle = "rgba(255,215,106," + ((.95 - i * .15) * intro) + ")";
+        ctx.beginPath(); ctx.arc(mapX(pt[0]), mapY(pt[1]), 2.4 - i * .25, 0, 6.2832); ctx.fill();
+      }
+    });
+    ctx.restore();
+
+    // x-ray lens
+    const px = probe.x, py = probe.y, rr = R * (reduce ? 1 : (.35 + .65 * intro));
+    const sx = px - rr, sy = py - rr, sz = 2 * rr;
+    tctx.setTransform(1, 0, 0, 1, 0, 0);
+    tctx.globalCompositeOperation = "source-over";
+    tctx.clearRect(0, 0, tmp.width, tmp.height);
+    tctx.drawImage(layerB, sx * dpr, sy * dpr, sz * dpr, sz * dpr, 0, 0, tmp.width, tmp.height);
+    tctx.globalCompositeOperation = "destination-in";
+    const g = tctx.createRadialGradient(tmp.width / 2, tmp.height / 2, tmp.width * .36, tmp.width / 2, tmp.height / 2, tmp.width / 2);
+    g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    tctx.fillStyle = g; tctx.fillRect(0, 0, tmp.width, tmp.height);
+    ctx.drawImage(tmp, sx, sy, sz, sz);
+
+    // probe graphics
+    ctx.strokeStyle = "#ff4d2e"; ctx.lineWidth = 1.5;
+    ctx.setLineDash([7, 7]); ctx.lineDashOffset = -now * .02;
+    ctx.beginPath(); ctx.arc(px, py, rr * .98, 0, 6.2832); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(px - 14, py); ctx.lineTo(px + 14, py); ctx.moveTo(px, py - 14); ctx.lineTo(px, py + 14); ctx.stroke();
+    ctx.fillStyle = "#ff4d2e"; ctx.beginPath(); ctx.arc(px, py, 3, 0, 6.2832); ctx.fill();
+    const u = (px - (cx - S / 2)) / S, v = (py - (cy - S / 2)) / S;
+    const inDie = u >= 0 && u <= 1 && v >= 0 && v <= 1;
+    const bl = inDie ? blockAt(u, v) : null;
+    const label = inDie ? "u=" + u.toFixed(2) + " v=" + v.toFixed(2) + "  " + (bl ? bl.n : "interconnect") : "off die";
+    ctx.font = "500 11px JetBrains Mono, monospace";
+    const tw = ctx.measureText(label).width + 14, tx = clamp(px - tw / 2, 8, W - tw - 8), ty = clamp(py + rr + 8, 8, H - 30);
+    ctx.fillStyle = "rgba(4,26,21,.92)"; ctx.fillRect(tx, ty, tw, 20);
+    ctx.fillStyle = "#f1f3eb"; ctx.fillText(label, tx + 7, ty + 14);
+
+    requestAnimationFrame(frame);
+  }
+
+  function start() { if (running) return; running = true; prev = performance.now(); requestAnimationFrame(frame); }
+  function stop() { running = false; }
+
+  function init() {
+    layout();
+    probe.x = reduce ? cx : cx - S * .75; probe.y = cy;
+    probe.tx = cx; probe.ty = cy;
+    start();
+  }
+  const ready = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve();
+  ready.then(init);
+  let rz;
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (layerA) layout(); }, 150); });
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((es) => { es[0].isIntersecting ? (layerA && start()) : stop(); }, { threshold: 0 }).observe(hero);
+  }
+  document.addEventListener("visibilitychange", () => { document.hidden ? stop() : (layerA && start()); });
+
+  /* ---------- Counters ---------- */
+  const counters = document.querySelectorAll("[data-count]");
+  if (!reduce && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        const el = e.target, end = +el.dataset.count, t1 = performance.now();
+        const tick = (n) => { const p = clamp((n - t1) / 1300, 0, 1); el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(tick); };
+        el.textContent = "0"; requestAnimationFrame(tick);
+      });
+    }, { threshold: .6 });
+    counters.forEach((c) => io.observe(c));
+  }
+
+  /* ---------- Panel tilt ---------- */
+  if (!reduce && canHover) {
+    document.querySelectorAll("[data-tilt]").forEach((p) => {
+      p.addEventListener("pointermove", (e) => {
+        const r = p.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        p.style.setProperty("--mx", (x * 100) + "%"); p.style.setProperty("--my", (y * 100) + "%");
+        p.style.transform = "rotateX(" + ((.5 - y) * 4).toFixed(2) + "deg) rotateY(" + ((x - .5) * 5).toFixed(2) + "deg)";
+      });
+      p.addEventListener("pointerleave", () => { p.style.transform = ""; });
+    });
+  }
+
+  /* ---------- Topbar ---------- */
+  const topbar = document.getElementById("topbar");
+  const toggleBar = () => topbar.classList.toggle("show", window.scrollY > hero.offsetHeight * 0.85);
+  window.addEventListener("scroll", toggleBar, { passive: true });
+  toggleBar();
+
+  /* ---------- Power analysis demo (simulated) ---------- */
+  (function () {
+    const cvs = document.getElementById("cpa");
+    if (!cvs) return;
+    const g2 = cvs.getContext("2d");
+    const slider = document.getElementById("ntr"), out = document.getElementById("ntrout"), read = document.getElementById("cpa-read");
+    const runBtn = document.getElementById("run"), keyBtn = document.getElementById("newkey");
+    const rotl = (x, n) => ((x << n) | (x >> (8 - n))) & 0xff;
+    const SB = new Uint8Array(256);
+    (function () {
+      let p = 1, q = 1;
+      do {
+        p = (p ^ (p << 1) ^ ((p & 0x80) ? 0x11b : 0)) & 0xff;
+        q = (q ^ (q << 1)) & 0xff; q = (q ^ (q << 2)) & 0xff; q = (q ^ (q << 4)) & 0xff;
+        if (q & 0x80) q ^= 0x09;
+        q &= 0xff;
+        SB[p] = (q ^ rotl(q, 1) ^ rotl(q, 2) ^ rotl(q, 3) ^ rotl(q, 4)) ^ 0x63;
+      } while (p !== 1);
+      SB[0] = 0x63;
+    })();
+    const HW = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) { let c = 0, x = i; while (x) { c += x & 1; x >>= 1; } HW[i] = c; }
+    const NMAX = 400, SIGMA = 3.5;
+    let seed = 20261121, key = 0, P = [], Lk = [], dpr2 = 1, runId = 0;
+    const hex = (v) => "0x" + v.toString(16).toUpperCase().padStart(2, "0");
+
+    function gen() {
+      const r = mulberry32(seed);
+      key = Math.floor(r() * 256); P = []; Lk = [];
+      const gauss = () => { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * r()); };
+      for (let i = 0; i < NMAX; i++) { const p = Math.floor(r() * 256); P.push(p); Lk.push(HW[SB[p ^ key]] + SIGMA * gauss()); }
+    }
+    function corr(n) {
+      let lm = 0; for (let i = 0; i < n; i++) lm += Lk[i]; lm /= n;
+      let dl = 0; for (let i = 0; i < n; i++) dl += (Lk[i] - lm) * (Lk[i] - lm);
+      const res = new Float64Array(256), h = new Float64Array(n);
+      for (let g = 0; g < 256; g++) {
+        let sh = 0; for (let i = 0; i < n; i++) { h[i] = HW[SB[P[i] ^ g]]; sh += h[i]; }
+        const hm = sh / n; let num = 0, dh = 0;
+        for (let i = 0; i < n; i++) { const a = h[i] - hm; num += a * (Lk[i] - lm); dh += a * a; }
+        res[g] = Math.abs(num / Math.sqrt((dh * dl) || 1));
+      }
+      return res;
+    }
+    function size() {
+      const w = cvs.parentElement.clientWidth - 48, h = w < 560 ? 230 : 290;
+      dpr2 = Math.min(2, window.devicePixelRatio || 1);
+      cvs.style.width = w + "px"; cvs.style.height = h + "px";
+      cvs.width = Math.round(w * dpr2); cvs.height = Math.round(h * dpr2);
+    }
+    function draw() {
+      const n = +slider.value; out.textContent = n;
+      const res = corr(n);
+      let best = 0, rank = 1;
+      for (let g = 1; g < 256; g++) if (res[g] > res[best]) best = g;
+      for (let g = 0; g < 256; g++) if (res[g] > res[key]) rank++;
+      const W2 = cvs.width / dpr2, H2 = cvs.height / dpr2;
+      g2.setTransform(dpr2, 0, 0, dpr2, 0, 0); g2.clearRect(0, 0, W2, H2);
+      const L = 40, B = 28, T = 22, Rr = 8, pw = W2 - L - Rr, ph = H2 - B - T, bw = pw / 256;
+      let mx = 0; for (let g = 0; g < 256; g++) if (res[g] > mx) mx = res[g];
+      const max = Math.max(.4, mx * 1.15);
+      g2.font = "11px JetBrains Mono, monospace"; g2.textAlign = "right"; g2.textBaseline = "middle";
+      for (let t = 0; t <= max + 1e-9; t += .1) {
+        const y = T + ph - (t / max) * ph;
+        g2.strokeStyle = "rgba(241,243,235,.12)"; g2.beginPath(); g2.moveTo(L, y); g2.lineTo(L + pw, y); g2.stroke();
+        g2.fillStyle = "rgba(241,243,235,.6)"; g2.fillText(t.toFixed(1), L - 8, y);
+      }
+      for (let g = 0; g < 256; g++) {
+        const hgt = (res[g] / max) * ph;
+        g2.fillStyle = g === key ? "#d9b45a" : (g === best ? "#ff4d2e" : "rgba(241,243,235,.4)");
+        g2.fillRect(L + g * bw, T + ph - hgt, Math.max(1, bw - .5), hgt);
+      }
+      g2.textAlign = "center"; g2.textBaseline = "top"; g2.fillStyle = "rgba(241,243,235,.6)";
+      [["00", 0], ["40", 64], ["80", 128], ["C0", 192], ["FF", 255]].forEach((a) => g2.fillText("0x" + a[0], L + a[1] * bw + bw / 2, T + ph + 8));
+      g2.textBaseline = "bottom";
+      const lab = (g, txt, col) => {
+        const x = Math.min(L + pw - 36, Math.max(L + 36, L + g * bw + bw / 2)), y = T + ph - (res[g] / max) * ph - 4;
+        g2.fillStyle = col; g2.fillText(txt, x, Math.max(14, y));
+      };
+      g2.font = "700 12px JetBrains Mono, monospace";
+      if (best !== key) lab(best, "guess " + hex(best), "#ff4d2e");
+      lab(key, "key " + hex(key), "#d9b45a");
+      read.textContent = best === key
+        ? "With " + n + " traces the top guess is " + hex(best) + ", which is the real key byte. Recovered."
+        : "With " + n + " traces the top guess is " + hex(best) + ", but the real key byte is " + hex(key) + ", ranked " + rank + " of 256. Add traces.";
+    }
+    slider.addEventListener("input", () => { runId++; draw(); });
+    keyBtn.addEventListener("click", () => { runId++; seed += 7919; gen(); slider.value = 10; draw(); });
+    runBtn.addEventListener("click", () => {
+      const id = ++runId;
+      if (reduce) { slider.value = NMAX; draw(); return; }
+      const a = performance.now(), from = 5, dur = 5500;
+      slider.value = from;
+      const step = (now) => {
+        if (id !== runId) return;
+        const p = clamp((now - a) / dur, 0, 1);
+        slider.value = Math.round(from + (NMAX - from) * (1 - Math.pow(1 - p, 2)));
+        draw();
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    let rz2;
+    window.addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(() => { size(); draw(); }, 120); });
+    gen(); size(); draw();
+    const fontsReady = document.fonts && document.fonts.ready;
+    if (fontsReady) fontsReady.then(() => draw());
+  })();
+
+  /* ---------- Boot log ---------- */
+  const lb = document.getElementById("logbox");
+  if (lb && !reduce && "IntersectionObserver" in window) {
+    lb.classList.add("armed");
+    new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { lb.classList.add("play"); o.disconnect(); } }, { threshold: .15 }).observe(lb);
+  }
+})();
+</script>
+</body>
+</html>

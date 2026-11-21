@@ -1,353 +1,362 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Parneet Kaur, hardware security</title>
-<meta name="description" content="Parneet Kaur: hardware security and digital forensics. Secure element analysis at IIT Bhilai, a ransomware review presented at IJCACI 2026, open source at IIT Ropar and OWASP Nettacker.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23082a22'/%3E%3Crect x='8' y='8' width='16' height='16' fill='none' stroke='%23d9b45a' stroke-width='3'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%23ff4d2e'/%3E%3C/svg%3E">
-<meta property="og:title" content="Parneet Kaur, hardware security">
-<meta property="og:description" content="Secure element analysis, ransomware forensics and open source. Move your cursor over the die.">
+<title>Parneet Kaur | Hardware security and digital forensics</title>
+<meta name="description" content="Parneet Kaur tests whether secure chips do what their datasheets say. Hardware security research at IIT Bhilai, ransomware forensics, OWASP Nettacker. Second-year B.Tech CSE (Cybersecurity).">
+<meta name="theme-color" content="#09061a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2309061a'/%3E%3Cg fill='none' stroke='%238b5cff' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M20 40a12 15 0 0 1 24 0'/%3E%3Cpath d='M14 42a18 22 0 0 1 36 0'/%3E%3Cpath d='M26 44a6 9 0 0 1 12 0'/%3E%3C/g%3E%3Ccircle cx='32' cy='46' r='2.6' fill='%23ffd23f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <style>
-/* Layout idea: the whole site is one circuit board. A decap-able die opens it (cursor = probe),
-   panels are components with pin-1 marks and reference designators, the timeline is a boot log. */
-:root {
-  --mask: #082a22;
-  --mask-2: #0d3a2f;
-  --mask-3: #14503f;
-  --gold: #d9b45a;
-  --silk: #f1f3eb;
-  --probe: #ff4d2e;
-  --dim: rgba(241, 243, 235, 0.7);
-  --line: rgba(241, 243, 235, 0.22);
-  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
-  --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
-  color-scheme: dark;
+:root{
+  --ink:#09061a; --bench:#130f26; --bench2:#1b1636; --line:rgba(201,178,255,.16);
+  --uv:#8b5cff; --uvglow:#c9b2ff; --lum:#4aa8ff; --lumtext:#d9f4ff;
+  --tent:#ffd23f; --manila:#e8dcc2; --manila2:#d9cba8; --paper:#2b2218; --paperfine:#5a4a33;
+  --string:#e53a2d; --text:#ece9fb; --muted:#aaa4c8;
+  --disp:"Archivo","Arial Black",system-ui,sans-serif; --type:"Courier Prime","Courier New",monospace;
 }
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; background: var(--mask); }
-body { margin: 0; background: var(--mask); color: var(--silk); font-family: var(--body); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
-a { color: inherit; }
-a:focus-visible, button:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-.wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
-.progress { position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--gold); transform-origin: 0 50%; transform: scaleX(0); z-index: 50; }
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px;background:var(--ink)}
+body{background:var(--ink);color:var(--text);font:400 1.05rem/1.62 var(--disp);font-stretch:100%;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--tent);outline-offset:3px;border-radius:3px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:fixed;left:12px;top:-60px;z-index:100;background:var(--tent);color:#1a1200;padding:10px 16px;font-weight:700;text-decoration:none;border-radius:6px}
+.skip:focus{top:12px}
+.wrap{width:min(1180px,100% - 40px);margin:0 auto}
 
-/* ---------- Hero ---------- */
-.hero { position: relative; height: min(100svh, 980px); min-height: 640px; overflow: hidden; border-bottom: 1px solid var(--line); }
-#die { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: pan-y; }
-.hero-ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 24px 28px 28px; }
-.nav { display: flex; flex-wrap: wrap; gap: 8px 28px; font-weight: 500; font-size: 15px; pointer-events: auto; }
-.nav a { text-decoration: none; padding: 4px 0; border-bottom: 1px solid transparent; }
-.nav a:hover { border-color: var(--gold); }
-.nav .brand { font-family: var(--mono); color: var(--gold); margin-right: auto; font-weight: 700; }
-.hero-bottom { display: flex; flex-direction: column; gap: 18px; max-width: 760px; }
-.tag { font-size: clamp(1.05rem, 1.6vw, 1.35rem); max-width: 26em; margin: 0; text-wrap: balance; text-shadow: 0 2px 18px var(--mask); }
-h1 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(5rem, 16.5vw, 15.5rem); line-height: .82; letter-spacing: -.01em; text-transform: uppercase; text-shadow: 0 4px 40px rgba(8,42,34,.8); }
-h1 span { display: block; }
-h1 .k { color: var(--gold); }
-.hint { position: absolute; right: 28px; bottom: 28px; max-width: 300px; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--dim); text-align: right; }
-.hint b { color: var(--probe); font-weight: 700; }
+/* progress */
+.progress{position:fixed;left:0;top:0;height:3px;width:100%;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--uv),var(--lum));box-shadow:0 0 12px var(--uv)}
 
-/* ---------- Marquee ---------- */
-.band { background: var(--gold); color: var(--mask); overflow: hidden; white-space: nowrap; border-block: 1px solid var(--mask); }
-.band-track { display: inline-flex; animation: roll 46s linear infinite; }
-.band span { font-family: var(--display); font-weight: 800; font-size: 1.5rem; letter-spacing: .02em; text-transform: uppercase; padding: 10px 0; }
-.band i { display: inline-block; width: 10px; height: 10px; margin: 0 26px; background: var(--mask); transform: rotate(45deg); }
-@keyframes roll { to { transform: translateX(-50%); } }
+/* nav */
+.nav{position:fixed;z-index:50;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:5px;border:1px solid var(--line);border-radius:999px;background:rgba(14,10,32,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);max-width:calc(100vw - 20px);overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{font:600 .86rem/1 var(--disp);font-stretch:100%;text-decoration:none;color:var(--muted);padding:11px 14px;border-radius:999px;white-space:nowrap;transition:color .2s,background .2s}
+.nav a:hover{color:var(--text)}
+.nav a.on{background:var(--tent);color:#1a1200}
+.nav .mk{display:grid;place-items:center;padding:0 12px;font-stretch:125%;font-weight:900;color:var(--uvglow)}
 
-/* ---------- Sections ---------- */
-section { padding: 96px 0 0; }
-.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 24px; margin-bottom: 36px; }
-h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(3rem, 8vw, 6.5rem); line-height: .9; text-transform: uppercase; letter-spacing: -.005em; }
-.sec-note { margin: 0; color: var(--dim); max-width: 34em; }
+/* hero */
+.hero{position:relative;height:100svh;min-height:560px;max-height:1100px;background:var(--ink);overflow:hidden;touch-action:pan-y;cursor:crosshair}
+#uv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding:0 max(20px,6vw) 22px;pointer-events:none}
+.hud p{font:400 .92rem/1.45 var(--type);color:var(--muted);max-width:34ch}
+.hud p b{color:var(--tent);font-weight:700}
+.hud button{pointer-events:auto;cursor:pointer;font:700 .9rem/1 var(--disp);color:var(--text);background:rgba(14,10,32,.7);border:1.5px solid var(--uv);border-radius:999px;padding:13px 20px;backdrop-filter:blur(8px);transition:background .2s,color .2s,box-shadow .2s}
+.hud button:hover{background:var(--uv);box-shadow:0 0 24px rgba(139,92,255,.6)}
+.hud button[aria-pressed=true]{background:var(--tent);color:#1a1200;border-color:var(--tent)}
 
-/* Stats */
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
-.stat { padding: 28px 24px 24px; border-right: 1px solid var(--line); }
-.stat:last-child { border-right: 0; }
-.stat b { display: block; font-family: var(--display); font-weight: 900; font-size: clamp(4rem, 9vw, 8rem); line-height: .9; color: var(--gold); font-variant-numeric: tabular-nums; }
-.stat span { display: block; margin-top: 10px; color: var(--dim); max-width: 16em; }
+/* tape */
+.tape{position:relative;z-index:3;margin:-14px 0 0;transform:rotate(-1.1deg);background:var(--tent);color:#14100a;overflow:hidden;border-block:3px solid #14100a;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.tape-track{display:flex;width:max-content;animation:tape 38s linear infinite}
+.tape span{font:900 1.05rem/1 var(--disp);font-stretch:125%;padding:15px 0;white-space:nowrap}
+.tape span i{display:inline-block;width:12px;height:12px;margin:0 26px;background:#14100a;transform:rotate(45deg)}
+@keyframes tape{to{transform:translateX(-50%)}}
 
-/* Panels (components) */
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; perspective: 1200px; }
-.span2 { grid-column: 1 / -1; }
-.panel { position: relative; background: linear-gradient(160deg, var(--mask-2), var(--mask)); border: 1px solid var(--line); padding: 40px 34px 34px; transform-style: preserve-3d; transition: transform .25s ease-out, border-color .25s; will-change: transform; overflow: hidden; }
-.panel::before { content: ""; position: absolute; left: 12px; top: 12px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--gold); }
-.panel::after { content: ""; position: absolute; inset: 0; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(217,180,90,.16), transparent 60%); opacity: 0; transition: opacity .25s; pointer-events: none; }
-.panel:hover { border-color: var(--gold); }
-.panel:hover::after { opacity: 1; }
-.ref { position: absolute; right: 16px; top: 12px; font-family: var(--mono); font-size: 12px; color: var(--gold); font-weight: 700; }
-.chip { display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 3px 10px; background: var(--gold); color: var(--mask); margin-bottom: 14px; }
-.chip.live { background: var(--probe); color: #1b0a06; }
-.chip.dim { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
-h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size: clamp(2rem, 3.4vw, 3rem); line-height: .98; text-wrap: balance; }
-.panel p { margin: 0 0 12px; max-width: 38em; color: #dfe6dc; }
-.panel p:last-child { margin-bottom: 0; }
-.who { font-family: var(--mono); font-size: 13px; color: var(--dim); }
-.fine { font-size: 14px; color: var(--dim); }
+/* sections */
+section{padding:clamp(84px,12vw,150px) 0 0}
+.sec-head{margin-bottom:clamp(34px,5vw,60px);max-width:760px}
+h2{font:900 clamp(2.5rem,6.4vw,5.2rem)/.96 var(--disp);font-stretch:125%;letter-spacing:-.015em;color:var(--text)}
+.sec-note{margin-top:16px;color:var(--muted);max-width:60ch}
 
-/* Method trace inside the featured panel */
-.flow { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 28px 0 8px; padding: 0; counter-reset: none; }
-.flow li { position: relative; padding: 18px 14px 0 0; font-size: 15px; line-height: 1.4; }
-.flow li::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 2px; background: var(--gold); }
-.flow li::after { content: ""; position: absolute; left: 0; top: -5px; width: 12px; height: 12px; background: var(--mask); border: 2px solid var(--gold); }
-.flow li b { display: block; font-family: var(--display); font-size: 1.35rem; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
-.flow li.next::before { background: repeating-linear-gradient(90deg, var(--probe) 0 8px, transparent 8px 14px); }
-.flow li.next::after { border-color: var(--probe); }
-.flow li.next b { color: var(--probe); }
+/* tent */
+.tent{display:inline-grid;place-items:center;width:42px;height:48px;background:var(--tent);color:#1a1200;font:900 1.4rem/1 var(--disp);font-stretch:125%;clip-path:polygon(16% 0,84% 0,100% 100%,0 100%);padding-top:8px;flex:none}
 
-/* Boot log */
-.log { background: #041a15; border: 1px solid var(--line); padding: 26px 28px; font-family: var(--mono); font-size: 14px; line-height: 1.9; overflow-x: auto; }
-.log div { display: grid; grid-template-columns: 62px 112px minmax(0, 1fr); gap: 0 14px; white-space: normal; }
-.log .ok { color: #8fd6a8; }
-.log .run { color: var(--probe); }
-.log .todo { color: var(--dim); }
-.log .ts { color: var(--gold); }
-.log.armed div { opacity: 0; transform: translateX(-10px); }
-.log.armed.play div { animation: line .45s ease-out forwards; animation-delay: calc(var(--i) * 90ms); }
-@keyframes line { to { opacity: 1; transform: none; } }
+/* summary */
+.case{display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(24px,4vw,56px);align-items:start}
+.folder{position:relative;background:var(--manila);color:var(--paper);padding:44px clamp(24px,3vw,40px) 34px;border-radius:4px 14px 6px 6px;font:400 1.05rem/1.7 var(--type);box-shadow:0 30px 60px rgba(0,0,0,.45);transform:rotate(-.6deg)}
+.folder::before{content:"CASE FILE";position:absolute;top:-26px;left:0;background:var(--manila);font:700 .78rem/1 var(--type);padding:9px 20px 8px;border-radius:10px 10px 0 0;letter-spacing:.14em}
+.folder h3{font:900 1.9rem/1.05 var(--disp);font-stretch:112%;margin-bottom:16px}
+.folder p+p{margin-top:14px}
+.folder .fine{font-size:.9rem;color:var(--paperfine)}
+.bags{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bag{position:relative;padding:40px 18px 20px;border:1.5px solid var(--line);border-radius:10px;background:linear-gradient(160deg,rgba(201,178,255,.1),rgba(74,168,255,.04));overflow:hidden}
+.bag::before{content:"";position:absolute;left:0;right:0;top:0;height:22px;background:repeating-linear-gradient(-45deg,var(--string) 0 10px,#f4efe3 10px 20px)}
+.bag b{display:block;font:900 clamp(2.6rem,5vw,3.8rem)/1 var(--disp);font-stretch:125%;color:var(--lumtext);text-shadow:0 0 26px rgba(74,168,255,.55)}
+.bag span{display:block;margin-top:8px;font-size:.9rem;line-height:1.4;color:var(--muted)}
 
-/* Test point rows */
-.tp { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 280px); gap: 6px 28px; align-items: center; padding: 26px 20px; border-top: 1px solid var(--line); transition: background .2s, color .2s; }
-.tp:last-child { border-bottom: 1px solid var(--line); }
-.tp:hover { background: var(--gold); color: var(--mask); }
-.tp .id { font-family: var(--mono); font-weight: 700; color: var(--gold); transition: color .2s; }
-.tp:hover .id { color: var(--mask); }
-.tp h3 { font-size: clamp(2.6rem, 7vw, 6rem); line-height: .88; margin: 0; text-transform: uppercase; }
-.tp .res { font-family: var(--mono); font-size: 13px; }
-.tp .res b { display: block; font-size: 14px; margin-bottom: 4px; }
-.tp .desc { grid-column: 2 / 3; margin: 0; max-width: 36em; opacity: .85; }
+/* board */
+.legend{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:20px;font:400 .92rem/1.4 var(--type);color:var(--muted)}
+.legend i{display:inline-block;width:26px;height:3px;border-radius:2px;margin-right:9px;vertical-align:middle}
+.board{position:relative;padding:60px clamp(14px,3vw,36px) 44px;border-radius:18px;border:1px solid var(--line);background:
+  radial-gradient(circle at 20% 0%,rgba(139,92,255,.13),transparent 55%),
+  radial-gradient(circle,rgba(201,178,255,.1) 1px,transparent 1.5px) 0 0/26px 26px,var(--bench)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:56px 28px;align-items:start}
+.card{position:relative;z-index:2;background:var(--manila);color:var(--paper);padding:34px 24px 26px;border-radius:3px;box-shadow:0 18px 40px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.05);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;font:400 .98rem/1.6 var(--disp);font-stretch:100%}
+.card:nth-child(1){transform:rotate(-.7deg)}.card:nth-child(2){transform:rotate(.9deg)}.card:nth-child(3){transform:rotate(.5deg)}.card:nth-child(4){transform:rotate(-.8deg)}.card:nth-child(5){transform:rotate(.6deg)}
+.card:hover,.card:focus-within{transform:rotate(0) translateY(-8px);box-shadow:0 30px 60px rgba(0,0,0,.6)}
+.card.span2{grid-column:span 2}
+.card .tent{position:absolute;left:18px;top:-24px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.pin{position:absolute;left:50%;top:-9px;width:20px;height:20px;margin-left:-10px;border-radius:50%;z-index:4;background:radial-gradient(circle at 35% 30%,#ff9a8f,var(--string) 55%,#7d1912);box-shadow:0 5px 8px rgba(0,0,0,.55)}
+.card h3{font:800 1.35rem/1.15 var(--disp);font-stretch:108%;margin:6px 0 4px}
+.card .who{font:700 .85rem/1.4 var(--type);color:var(--paperfine);margin-bottom:12px}
+.card p+p{margin-top:10px}
+.card .fine{font:400 .85rem/1.5 var(--type);color:var(--paperfine)}
+.stamp{display:inline-block;font:700 .72rem/1 var(--type);letter-spacing:.08em;padding:4px 8px 3px;border:2px solid currentColor;border-radius:3px;transform:rotate(-2.5deg)}
+.stamp.live{color:#b3241a}.stamp.done{color:#4b2fb0}.stamp.priv{color:#6b5d44}
+.flow{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin:14px 0}
+.flow li{padding:10px 12px;border-left:3px solid var(--paper);background:rgba(43,34,24,.07);font-size:.86rem;line-height:1.35}
+.flow li b{display:block;font:900 .95rem/1.2 var(--disp);font-stretch:112%}
+.flow li.next{border-left-style:dashed;opacity:.8}
+.strings{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:visible}
+.th{fill:none;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.7s cubic-bezier(.5,0,.2,1),opacity .3s}
+.th.sh{stroke:rgba(0,0,0,.45);stroke-width:5;filter:blur(2px)}
+.th.hw{stroke:var(--lum);stroke-width:2.6}.th.rw{stroke:var(--string);stroke-width:2.6}
+.strings.drawn .th{stroke-dashoffset:0}
+.board[data-focus=hw] .th.rw,.board[data-focus=rw] .th.hw{opacity:.2}
 
-/* Tools */
-.kit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
-.kit div { border-top: 2px solid var(--gold); padding-top: 14px; }
-.kit h4 { margin: 0 0 6px; font-family: var(--display); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
-.kit p { margin: 0; color: #dfe6dc; }
+/* demo */
+.bench{background:linear-gradient(180deg,var(--bench2),var(--bench));border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.demo-bar{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-bottom:18px}
+.demo-bar label{font:700 .95rem/1 var(--type);display:flex;align-items:center;gap:12px}
+.demo-bar output{display:inline-block;min-width:3ch;color:var(--tent)}
+input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
+.btn{cursor:pointer;font:700 .92rem/1 var(--disp);color:var(--text);background:transparent;border:1.5px solid var(--line);border-radius:999px;padding:13px 20px;transition:background .2s,border-color .2s,color .2s}
+.btn:hover{border-color:var(--uvglow);background:rgba(139,92,255,.18)}
+.btn.primary{background:var(--tent);color:#1a1200;border-color:var(--tent)}
+.btn.primary:hover{background:#ffe27a}
+.leg{display:flex;flex-wrap:wrap;gap:6px 22px;margin-bottom:14px;font:400 .88rem/1.4 var(--type);color:var(--muted)}
+.leg span{display:flex;align-items:center;gap:8px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:2px}
+#cpa{display:block;max-width:100%}
+.cpa-read{margin-top:14px;font:700 1rem/1.5 var(--type);color:var(--lumtext);min-height:3em}
+.bench .fine{margin-top:12px;font:400 .85rem/1.5 var(--type);color:var(--muted)}
 
-/* Contact */
-.contact { margin-top: 110px; background: var(--gold); color: var(--mask); padding: 70px 0 40px; }
-.contact h2 { font-size: clamp(3rem, 9vw, 8.5rem); max-width: 11em; }
-.contact p { max-width: 34em; font-size: 1.1rem; margin: 22px 0 0; }
-.links { display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0 44px; padding: 0; list-style: none; }
-.links a { display: inline-block; font-family: var(--display); font-weight: 800; font-size: 1.6rem; text-transform: uppercase; text-decoration: none; padding: 8px 24px; border: 3px solid var(--mask); transition: background .15s, color .15s; }
-.links a:hover { background: var(--mask); color: var(--gold); }
-.foot { font-family: var(--mono); font-size: 12px; }
+/* custody */
+.custody{position:relative;list-style:none;border-left:2px solid var(--line);margin-left:8px;padding-left:0}
+.ent{position:relative;display:grid;grid-template-columns:104px 108px 1fr;gap:6px 20px;align-items:baseline;padding:18px 0 18px 30px;border-bottom:1px dashed rgba(201,178,255,.12);font:400 1rem/1.5 var(--type)}
+.ent::before{content:"";position:absolute;left:-7px;top:26px;width:12px;height:12px;border-radius:50%;background:var(--bench);border:2px solid var(--uvglow)}
+.ent .ts{color:var(--muted);font-size:.92rem}
+.ent .tx{color:var(--text);font-family:var(--disp);font-size:1.02rem}
+.ent .stamp{justify-self:start}
+.ent.ok .stamp{color:var(--uvglow)}.ent.run .stamp{color:#ff6b5e}.ent.run::before{background:#ff6b5e;border-color:#ff6b5e;box-shadow:0 0 14px #ff6b5e}.ent.todo .stamp{color:var(--tent)}.ent.todo::before{border-style:dashed;border-color:var(--tent)}
+.custody.armed .ent{opacity:0;transform:translateX(-14px)}
+.custody.armed.play .ent{opacity:1;transform:none;transition:opacity .5s ease calc(var(--i)*70ms),transform .5s ease calc(var(--i)*70ms)}
 
+/* finals */
+.exh{display:grid;grid-template-columns:repeat(3,1fr);gap:56px 28px}
+.exh .card{padding-top:38px}
+.exh .card::after{content:"";position:absolute;right:-16px;top:12px;width:70px;height:22px;background:rgba(255,210,63,.55);transform:rotate(35deg)}
+.res{font:700 .86rem/1.4 var(--type);margin:8px 0 10px;color:var(--paper)}
+.res b{display:block;font-family:var(--disp);font-size:.98rem;font-weight:800}
 
-/* Topbar */
-.topbar { position: fixed; top: 3px; left: 0; right: 0; z-index: 40; display: flex; flex-wrap: wrap; gap: 4px 24px; padding: 10px 28px; background: rgba(8,42,34,.94); border-bottom: 1px solid var(--line); font-weight: 500; font-size: 14px; transform: translateY(-120%); visibility: hidden; transition: transform .25s ease-out, visibility 0s .25s; }
-.topbar.show { transform: none; visibility: visible; transition: transform .25s ease-out; }
-.topbar a { text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
-.topbar a:hover { border-color: var(--gold); }
-.topbar .brand { font-family: var(--mono); color: var(--gold); font-weight: 700; margin-right: auto; }
+/* kit */
+.kit{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.kit div{padding:26px 24px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(201,178,255,.05),transparent)}
+.kit div:last-child{border-right:0}
+.kit h4{font:900 1.2rem/1.2 var(--disp);font-stretch:112%;margin-bottom:10px;color:var(--lumtext)}
+.kit p{color:var(--muted);font-size:.98rem}
 
-/* Power analysis demo */
-.demo { border: 1px solid var(--line); background: #041a15; padding: 24px; }
-.demo-bar { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
-.demo-bar label { font-family: var(--mono); font-size: 13px; display: flex; gap: 10px; align-items: baseline; }
-.demo-bar output { color: var(--gold); font-weight: 700; display: inline-block; min-width: 3ch; }
-.demo-bar input[type=range] { flex: 1 1 240px; accent-color: var(--gold); height: 28px; }
-.btn { font-family: var(--display); font-weight: 800; font-size: 1.15rem; text-transform: uppercase; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 5px 18px; cursor: pointer; }
-.btn:hover { background: var(--gold); color: var(--mask); }
-.btn.primary { background: var(--gold); color: var(--mask); }
-.btn.primary:hover { background: var(--silk); border-color: var(--silk); }
-#cpa { display: block; width: 100%; }
-.cpa-read { font-family: var(--mono); font-size: 14px; line-height: 1.6; margin: 16px 0 8px; min-height: 3.4em; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--dim); margin: 0 0 10px; }
-.legend i { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; }
+/* contact */
+.contact{position:relative;margin-top:clamp(90px,12vw,150px);padding:clamp(80px,11vw,140px) 0 56px;border-top:1px solid var(--line);overflow:hidden;--mx:70%;--my:30%;background:radial-gradient(circle 340px at var(--mx) var(--my),rgba(139,92,255,.3),transparent 72%),var(--ink)}
+.contact h2{max-width:14ch;font-size:clamp(2.8rem,8.5vw,7rem)}
+.contact p{max-width:58ch;margin-top:26px;color:var(--muted);font-size:1.12rem}
+.links{display:flex;flex-wrap:wrap;gap:12px;margin-top:38px;list-style:none}
+.links a{display:inline-block;text-decoration:none;font:800 1.05rem/1 var(--disp);padding:17px 28px;border-radius:999px;border:1.5px solid var(--uv);transition:background .2s,color .2s,box-shadow .2s}
+.links a:hover{background:var(--tent);color:#1a1200;border-color:var(--tent);box-shadow:0 0 30px rgba(255,210,63,.4)}
+.links li:first-child a{background:var(--uv)}
+.foot{margin-top:70px!important;font:400 .88rem/1.4 var(--type)!important;color:var(--muted)}
 
-@media (max-width: 900px) {
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stat:nth-child(2) { border-right: 0; }
-  .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-  .grid { grid-template-columns: 1fr; }
-  .flow { grid-template-columns: 1fr 1fr; gap: 18px 0; }
-  .kit { grid-template-columns: 1fr; }
-  .tp { grid-template-columns: 1fr; }
-  .tp .desc { grid-column: auto; }
-  .hint { display: none; }
-  .topbar { padding: 8px 20px; gap: 2px 16px; font-size: 13px; }
-  h1 { font-size: clamp(3.6rem, 16vw, 9rem); }
-  .nav { gap: 6px 18px; font-size: 14px; }
-  .hero-ui { padding: 18px 20px 24px; }
-  .log div { grid-template-columns: 58px minmax(0, 1fr); }
-  .log div .ts { grid-column: 2; }
-  .log div .tx { grid-column: 1 / -1; }
+@media(max-width:960px){
+  .case{grid-template-columns:1fr}
+  .cards,.exh{grid-template-columns:1fr 1fr}
+  .card.span2{grid-column:span 2}
+  .kit{grid-template-columns:1fr}.kit div{border-right:0;border-bottom:1px solid var(--line)}.kit div:last-child{border-bottom:0}
 }
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .band-track { animation: none; }
-  .log.armed div { opacity: 1; transform: none; animation: none; }
-  .panel { transition: none; }
+@media(max-width:640px){
+  .cards,.exh{grid-template-columns:1fr}.card.span2{grid-column:auto}
+  .hud p{max-width:21ch;font-size:.84rem}
+  .hud button{padding:12px 16px;font-size:.84rem}
+  .ent{grid-template-columns:1fr auto;gap:4px 12px;padding-left:24px}
+  .ent .tx{grid-column:1/-1}
+  .bags{gap:10px}
+  .bench{padding:16px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .tape-track{animation:none}
+  .th{transition:none;stroke-dashoffset:0}
+  .custody.armed .ent{opacity:1;transform:none}
 }
 </style>
 </head>
 <body>
+<a class="skip" href="#case">Skip to content</a>
 <div class="progress" id="progress" aria-hidden="true"></div>
-<nav class="topbar" id="topbar" aria-label="Quick links"><a class="brand" href="#hero">PK</a><a href="#research">Research</a><a href="#demo">Demo</a><a href="#log">Log</a><a href="#tests">Competitions</a><a href="#contact">Contact</a></nav>
+<nav class="nav" id="nav" aria-label="Sections">
+  <a class="mk" href="#hero" aria-label="Top">PK</a>
+  <a href="#case">Summary</a><a href="#board">Board</a><a href="#demo">Demo</a><a href="#custody">Custody</a><a href="#finals">Finals</a><a href="#contact">Contact</a>
+</nav>
 
 <header class="hero" id="hero">
-  <canvas id="die" tabindex="0" role="img" aria-label="Interactive illustration of a chip die. Move the pointer or use arrow keys to x-ray the die under a probe. Red marks stand for confirmed findings."></canvas>
-  <div class="hero-ui">
-    <nav class="nav" aria-label="Sections">
-      <a class="brand" href="#hero">PK</a>
-      <a href="#research">Research</a>
-      <a href="#demo">Demo</a>
-      <a href="#log">Log</a>
-      <a href="#tests">Competitions</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <div class="hero-bottom">
-      <p class="tag">I test whether secure chips do what their datasheets say. Second-year B.Tech CSE (Cybersecurity), DBS Global University.</p>
-      <h1><span>Parneet</span><span class="k">Kaur</span></h1>
-    </div>
+  <canvas id="uv" aria-hidden="true"></canvas>
+  <div class="sr-only">
+    <h1>Parneet Kaur</h1>
+    <p>I test whether secure chips do what their datasheets say. Second-year B.Tech CSE (Cybersecurity), DBS Global University. Hardware security research at IIT Bhilai, ransomware forensics, OWASP Nettacker.</p>
   </div>
-  <p class="hint">Move over the die. The <b>red marks</b> are my 62 confirmed findings. Illustrative die, not TROPIC01.</p>
+  <noscript><p style="position:absolute;inset:auto 20px 80px;font:700 2rem Arial">Parneet Kaur. Hardware security and digital forensics.</p></noscript>
+  <div class="hud">
+    <p id="hud" aria-live="polite"><b>0 of 8</b> latent marks found. Sweep the UV lamp across the room.</p>
+    <button type="button" id="lights" aria-pressed="false">Lights on</button>
+  </div>
 </header>
 
-<div class="band" aria-hidden="true">
-  <div class="band-track">
-    <span>IJCACI 2026 presented<i></i>62 confirmed findings<i></i>IIT Bhilai<i></i>IIT Ropar<i></i>OWASP Nettacker<i></i>Hardware security<i></i>Digital forensics<i></i>SIH 2025 national finalist<i></i></span>
-    <span>IJCACI 2026 presented<i></i>62 confirmed findings<i></i>IIT Bhilai<i></i>IIT Ropar<i></i>OWASP Nettacker<i></i>Hardware security<i></i>Digital forensics<i></i>SIH 2025 national finalist<i></i></span>
+<div class="tape" aria-hidden="true">
+  <div class="tape-track">
+    <span>62 CONFIRMED FINDINGS<i></i>IJCACI 2026 PRESENTED<i></i>IIT BHILAI<i></i>IIT ROPAR<i></i>OWASP NETTACKER<i></i>HARDWARE SECURITY<i></i>DIGITAL FORENSICS<i></i>SIH 2025 NATIONAL FINALIST<i></i></span>
+    <span>62 CONFIRMED FINDINGS<i></i>IJCACI 2026 PRESENTED<i></i>IIT BHILAI<i></i>IIT ROPAR<i></i>OWASP NETTACKER<i></i>HARDWARE SECURITY<i></i>DIGITAL FORENSICS<i></i>SIH 2025 NATIONAL FINALIST<i></i></span>
   </div>
 </div>
 
 <main>
-<section aria-label="Numbers">
+<section id="case">
   <div class="wrap">
-    <div class="stats">
-      <div class="stat"><b data-count="62">62</b><span>confirmed findings on one secure element</span></div>
-      <div class="stat"><b data-count="11">11</b><span>sequential PIN attempts checked for key destruction</span></div>
-      <div class="stat"><b data-count="4">4</b><span>years of ransomware research reviewed</span></div>
-      <div class="stat"><b data-count="3">3</b><span>hackathon finales reached</span></div>
+    <div class="sec-head"><h2>The case so far</h2></div>
+    <div class="case">
+      <article class="folder">
+        <h3>Subject: Parneet Kaur</h3>
+        <p>Second-year B.Tech CSE (Cybersecurity) at DBS Global University, Dehradun. I test whether secure chips do what their datasheets say, and I take apart ransomware to see what evidence it leaves behind.</p>
+        <p>In June 2026 I started an independent analysis of a secure element at IIT Bhilai. Since then I have also worked on a USB crypto token, presented a ransomware review at a conference, and contributed to OWASP Nettacker.</p>
+        <p>Long term I want to work in investigative digital forensics.</p>
+        <p class="fine">CGPA 8.58 after two semesters, no backlogs.</p>
+      </article>
+      <div class="bags">
+        <div class="bag"><b data-count="62">62</b><span>confirmed findings on one secure element</span></div>
+        <div class="bag"><b data-count="11">11</b><span>sequential PIN attempts checked for key destruction</span></div>
+        <div class="bag"><b data-count="4">4</b><span>years of ransomware research reviewed</span></div>
+        <div class="bag"><b data-count="3">3</b><span>hackathon finales reached</span></div>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="research">
+<section id="board">
   <div class="wrap">
-    <div class="sec-head"><h2>Research</h2><p class="sec-note">Work I would want a reviewer to read first.</p></div>
-    <div class="grid">
+    <div class="sec-head">
+      <h2>Evidence board</h2>
+      <p class="sec-note">The work I would want a reviewer to read first. Strings join projects that belong to the same line of inquiry.</p>
+      <p class="legend"><span><i style="background:var(--lum)"></i>hardware security</span><span><i style="background:var(--string)"></i>ransomware and forensics</span></p>
+    </div>
+    <div class="board" id="boardwrap">
+      <div class="cards">
 
-      <article class="panel span2" data-tilt>
-        <span class="ref">U1</span>
-        <span class="chip live">In progress</span>
-        <h3>TROPIC01 secure element analysis</h3>
-        <p class="who">de.ci.phe.red Lab, IIT Bhilai / Dr. Dhiman Saha / June 2026 onwards</p>
-        <p>An independent analysis of Tropic Square's TROPIC01 development kit. A datasheet makes claims about what the chip protects. This project tests them against the hardware. It produced 62 confirmed findings and a conformance test suite that I built and delivered to the lab.</p>
-        <ul class="flow">
-          <li><b>USB</b>Descriptor reconnaissance</li>
-          <li><b>SPI</b>Protocol tested against the conformance spec</li>
-          <li><b>Firmware</b>STM32 firmware decompiled in Ghidra</li>
-          <li><b>Keys</b>Mac-and-Destroy checked across 11 PIN attempts</li>
-          <li class="next"><b>Power</b>Analysis with a ChipWhisperer Husky, started</li>
-        </ul>
-        <p class="fine">Code and report are lab-restricted, so there is no public repository.</p>
-      </article>
+        <article class="card span2" id="c-tropic" data-th="hw">
+          <span class="pin"></span><span class="tent" aria-label="Exhibit A">A</span>
+          <span class="stamp live">In progress</span>
+          <h3>TROPIC01 secure element analysis</h3>
+          <p class="who">de.ci.phe.red Lab, IIT Bhilai / Dr. Dhiman Saha / June 2026 onwards</p>
+          <p>An independent analysis of Tropic Square's TROPIC01 development kit. A datasheet makes claims about what the chip protects. This project tests them against the hardware. It produced 62 confirmed findings and a conformance test suite that I built and delivered to the lab.</p>
+          <ul class="flow">
+            <li><b>USB</b>Descriptor reconnaissance</li>
+            <li><b>SPI</b>Protocol tested against the conformance spec</li>
+            <li><b>Firmware</b>STM32 firmware decompiled in Ghidra</li>
+            <li><b>Keys</b>Mac-and-Destroy checked across 11 PIN attempts</li>
+            <li class="next"><b>Power</b>Analysis with a ChipWhisperer Husky, started</li>
+          </ul>
+          <p class="fine">Code and report are lab-restricted, so there is no public repository.</p>
+        </article>
 
-      <article class="panel" data-tilt>
-        <span class="ref">U2</span>
-        <span class="chip">Presented</span>
-        <h3>Intelligent ransomware defence, reviewed</h3>
-        <p class="who">IJCACI 2026 / with Prof. Merry KP / July 2026</p>
-        <p>A systematic review of machine learning and deep learning ransomware detection across four years of literature, validated in FlareVM and REMnux. It found a gap between detection accuracy and forensic recoverability. RansomGuard starts there.</p>
-        <p class="fine">Accepted and presented. The publishing contract is signed and the paper is not in print yet.</p>
-      </article>
+        <article class="card" id="c-token" data-th="hw">
+          <span class="pin"></span><span class="tent" aria-label="Exhibit B">B</span>
+          <span class="stamp priv">Private</span>
+          <h3>TrusToken and Rowhammer</h3>
+          <p class="who">IIT Bhilai / June to August 2026</p>
+          <p>Attack and analysis work on a cryptographic USB token built by C-DAC Noida and IIT Bhilai, and a Rowhammer attack implemented in a simulated environment. The token is an industry project, so I keep the details private.</p>
+        </article>
 
-      <article class="panel" data-tilt>
-        <span class="ref">U3</span>
-        <span class="chip live">Early build</span>
-        <h3>RansomGuard</h3>
-        <p class="who">Solo project / architecture phase</p>
-        <p>A ransomware detector that collects forensic evidence at the moment it fires. A spike in file entropy or a process deleting shadow copies triggers a snapshot of the affected files, the process tree and the network state, with a timestamped evidence chain.</p>
-        <p class="fine">Python, watchdog, psutil, scikit-learn, SQLite, Streamlit. Runs only against synthetic ransomware-like behaviour in a sandbox. No benchmark results yet.</p>
-      </article>
+        <article class="card" id="c-ijcaci" data-th="rw">
+          <span class="pin"></span><span class="tent" aria-label="Exhibit C">C</span>
+          <span class="stamp done">Presented</span>
+          <h3>Intelligent ransomware defence, reviewed</h3>
+          <p class="who">IJCACI 2026 / with Prof. Merry KP / July 2026</p>
+          <p>A systematic review of machine learning and deep learning ransomware detection across four years of literature, validated in FlareVM and REMnux. It found a gap between detection accuracy and forensic recoverability. RansomGuard starts there.</p>
+          <p class="fine">Accepted and presented. The publishing contract is signed and the paper is not in print yet.</p>
+        </article>
 
-      <article class="panel" data-tilt>
-        <span class="ref">U4</span>
-        <span class="chip dim">Private</span>
-        <h3>TrusToken and Rowhammer</h3>
-        <p class="who">IIT Bhilai / June to August 2026</p>
-        <p>Attack and analysis work on a cryptographic USB token built by C-DAC Noida and IIT Bhilai, and a Rowhammer attack implemented in a simulated environment. The token is an industry project, so I keep the details private.</p>
-      </article>
+        <article class="card" id="c-guard" data-th="rw">
+          <span class="pin"></span><span class="tent" aria-label="Exhibit D">D</span>
+          <span class="stamp live">Early build</span>
+          <h3>RansomGuard</h3>
+          <p class="who">Solo project / architecture phase</p>
+          <p>A ransomware detector that collects forensic evidence at the moment it fires. A spike in file entropy or a process deleting shadow copies triggers a snapshot of the affected files, the process tree and the network state, with a timestamped evidence chain.</p>
+          <p class="fine">Python, watchdog, psutil, scikit-learn, SQLite, Streamlit. Runs only against synthetic ransomware-like behaviour in a sandbox. No benchmark results yet.</p>
+        </article>
 
-      <article class="panel" data-tilt>
-        <span class="ref">J1</span>
-        <span class="chip dim">Open source</span>
-        <h3>Contributions</h3>
-        <p><b>OWASP Nettacker.</b> One merged pull request. I researched CVE-2025-32756, an existing critical Fortinet FortiVoice flaw, to improve the scanner's detection modules. Applied to GSoC 2026, not selected, still contributing.</p>
-        <p><b>VLED Lab, IIT Ropar.</b> Open Source Intern under Prof. Sudarshan Iyengar, with commits on a live public repository. Runs to the end of December 2026.</p>
-        <p><b>GirlScript Summer of Code.</b> Contributor.</p>
-      </article>
+        <article class="card" id="c-oss" data-th="none">
+          <span class="pin"></span><span class="tent" aria-label="Exhibit E">E</span>
+          <span class="stamp priv">Open source</span>
+          <h3>Contributions</h3>
+          <p><b>OWASP Nettacker.</b> One merged pull request. I researched CVE-2025-32756, an existing critical Fortinet FortiVoice flaw, to improve the scanner's detection modules. Applied to GSoC 2026, not selected, still contributing.</p>
+          <p><b>VLED Lab, IIT Ropar.</b> Open Source Intern under Prof. Sudarshan Iyengar, with commits on a live public repository. Runs to the end of December 2026.</p>
+          <p><b>GirlScript Summer of Code.</b> Contributor.</p>
+        </article>
 
+      </div>
+      <svg class="strings" id="strings" aria-hidden="true"></svg>
     </div>
   </div>
 </section>
 
 <section id="demo">
   <div class="wrap">
-    <div class="sec-head"><h2>Break a key</h2><p class="sec-note">A simulated power-analysis attack, the technique I am learning on the ChipWhisperer. Add power traces and watch the secret key byte stand out from 255 wrong guesses.</p></div>
-    <div class="demo">
+    <div class="sec-head"><h2>Recover a key from noise</h2><p class="sec-note">A simulated power-analysis attack, the technique I am learning on the ChipWhisperer. Add power traces and watch the secret key byte stand out from 255 wrong guesses.</p></div>
+    <div class="bench">
       <div class="demo-bar">
         <label for="ntr">Traces captured <output id="ntrout" for="ntr">30</output></label>
         <input type="range" id="ntr" min="5" max="400" value="30" aria-describedby="cpa-read">
         <button class="btn primary" id="run" type="button">Run the attack</button>
         <button class="btn" id="newkey" type="button">New secret key</button>
       </div>
-      <p class="legend"><span><i style="background:#d9b45a"></i>real key byte</span><span><i style="background:#ff4d2e"></i>attacker's best guess</span><span><i style="background:rgba(241,243,235,.4)"></i>other guesses</span><span>Each bar is one of the 256 possible key bytes. Height is how well that guess matches the power readings.</span></p>
-      <canvas id="cpa" role="img" aria-label="Bar chart of correlation for each of the 256 key byte guesses. The real key byte is highlighted in gold."></canvas>
+      <p class="leg"><span><i style="background:#ffd23f"></i>real key byte</span><span><i style="background:#ff5a4a"></i>attacker's best guess</span><span><i style="background:rgba(160,190,255,.45)"></i>other guesses</span></p>
+      <canvas id="cpa" role="img" aria-label="Bar chart of correlation for each of the 256 key byte guesses. The real key byte is highlighted in yellow."></canvas>
       <p class="cpa-read" id="cpa-read" aria-live="polite"></p>
-      <p class="fine">Simulated leakage: the Hamming weight of an AES S-box output plus random noise. It uses no data from any real device and none from my lab work.</p>
+      <p class="fine">Each bar is one of the 256 possible key bytes. Height is how well that guess matches the power readings. Simulated leakage: the Hamming weight of an AES S-box output plus random noise. It uses no data from any real device and none from my lab work.</p>
     </div>
   </div>
 </section>
 
-<section id="log">
+<section id="custody">
   <div class="wrap">
-    <div class="sec-head"><h2>Boot log</h2><p class="sec-note">What has happened since I started the degree, and what is scheduled.</p></div>
-    <div class="log" id="logbox" role="list">
-      <div class="l ok" role="listitem" style="--i:0"><span>[ OK ]</span><span class="ts">2023</span><span class="tx">Silver Award, Queen's Commonwealth Essay Competition</span></div>
-      <div class="l ok" role="listitem" style="--i:1"><span>[ OK ]</span><span class="ts">2025-08</span><span class="tx">Class Representative, DBS Global University</span></div>
-      <div class="l ok" role="listitem" style="--i:2"><span>[ OK ]</span><span class="ts">2025</span><span class="tx">Smart India Hackathon national finalist at IIIT Dharwad (GreenLight)</span></div>
-      <div class="l ok" role="listitem" style="--i:3"><span>[ OK ]</span><span class="ts">2026-01</span><span class="tx">PR and Social Media Head, Phoenix Media Club. GeeksforGeeks Campus Mantri until July</span></div>
-      <div class="l ok" role="listitem" style="--i:4"><span>[ OK ]</span><span class="ts">2026-06</span><span class="tx">Research Intern, de.ci.phe.red Lab, IIT Bhilai (to August)</span></div>
-      <div class="l run" role="listitem" style="--i:5"><span>[ .. ]</span><span class="ts">2026-06</span><span class="tx">Open Source Intern, VLED Lab, IIT Ropar (still running)</span></div>
-      <div class="l ok" role="listitem" style="--i:6"><span>[ OK ]</span><span class="ts">2026-06</span><span class="tx">CRO Consumer Rights Organisation, social work internship (to July)</span></div>
-      <div class="l ok" role="listitem" style="--i:7"><span>[ OK ]</span><span class="ts">2026-07</span><span class="tx">IJCACI 2026, ransomware review presented</span></div>
-      <div class="l ok" role="listitem" style="--i:8"><span>[ OK ]</span><span class="ts">2026-09</span><span class="tx">Arduino Edge AI Bootcamp completed</span></div>
-      <div class="l ok" role="listitem" style="--i:9"><span>[ OK ]</span><span class="ts">2026-10</span><span class="tx">Cisco Cybersecurity Defense Analyst pathway completed</span></div>
-      <div class="l run" role="listitem" style="--i:10"><span>[ .. ]</span><span class="ts">2026-11</span><span class="tx">Google Gemini Student Ambassador, semester 2. TROPIC01 power analysis. RansomGuard architecture</span></div>
-      <div class="l todo" role="listitem" style="--i:11"><span>[ -- ]</span><span class="ts">2026-12</span><span class="tx">VLED Lab internship ends on the 31st</span></div>
-      <div class="l todo" role="listitem" style="--i:12"><span>[ -- ]</span><span class="ts">2027</span><span class="tx">Summer research placement, hardware security and digital forensics</span></div>
-    </div>
+    <div class="sec-head"><h2>Chain of custody</h2><p class="sec-note">Every dated step since I started the degree, and what is still pending.</p></div>
+    <ol class="custody" id="logbox">
+      <li class="ent ok" style="--i:0"><span class="ts">2023</span><span class="stamp">LOGGED</span><span class="tx">Silver Award, Queen's Commonwealth Essay Competition</span></li>
+      <li class="ent ok" style="--i:1"><span class="ts">2025-08</span><span class="stamp">LOGGED</span><span class="tx">Class Representative, DBS Global University</span></li>
+      <li class="ent ok" style="--i:2"><span class="ts">2025</span><span class="stamp">LOGGED</span><span class="tx">Smart India Hackathon national finalist at IIIT Dharwad (GreenLight)</span></li>
+      <li class="ent ok" style="--i:3"><span class="ts">2026-01</span><span class="stamp">LOGGED</span><span class="tx">PR and Social Media Head, Phoenix Media Club. GeeksforGeeks Campus Mantri until July</span></li>
+      <li class="ent ok" style="--i:4"><span class="ts">2026-06</span><span class="stamp">LOGGED</span><span class="tx">Research Intern, de.ci.phe.red Lab, IIT Bhilai (to August)</span></li>
+      <li class="ent run" style="--i:5"><span class="ts">2026-06</span><span class="stamp">OPEN</span><span class="tx">Open Source Intern, VLED Lab, IIT Ropar (still running)</span></li>
+      <li class="ent ok" style="--i:6"><span class="ts">2026-06</span><span class="stamp">LOGGED</span><span class="tx">CRO Consumer Rights Organisation, social work internship (to July)</span></li>
+      <li class="ent ok" style="--i:7"><span class="ts">2026-07</span><span class="stamp">LOGGED</span><span class="tx">IJCACI 2026, ransomware review presented</span></li>
+      <li class="ent ok" style="--i:8"><span class="ts">2026-09</span><span class="stamp">LOGGED</span><span class="tx">Arduino Edge AI Bootcamp completed</span></li>
+      <li class="ent ok" style="--i:9"><span class="ts">2026-10</span><span class="stamp">LOGGED</span><span class="tx">Cisco Cybersecurity Defense Analyst pathway completed</span></li>
+      <li class="ent run" style="--i:10"><span class="ts">2026-11</span><span class="stamp">OPEN</span><span class="tx">Google Gemini Student Ambassador, semester 2. TROPIC01 power analysis. RansomGuard architecture</span></li>
+      <li class="ent todo" style="--i:11"><span class="ts">2026-12</span><span class="stamp">PENDING</span><span class="tx">VLED Lab internship ends on the 31st</span></li>
+      <li class="ent todo" style="--i:12"><span class="ts">2027</span><span class="stamp">PENDING</span><span class="tx">Summer research placement, hardware security and digital forensics</span></li>
+    </ol>
   </div>
 </section>
 
-<section id="tests">
+<section id="finals">
   <div class="wrap">
-    <div class="sec-head"><h2>Competitions</h2><p class="sec-note">Team projects built against a deadline.</p></div>
-    <div>
-      <article class="tp">
-        <span class="id">TP1</span>
+    <div class="sec-head"><h2>Built against a deadline</h2><p class="sec-note">Team projects from three competitions.</p></div>
+    <div class="exh">
+      <article class="card"><span class="tent" aria-label="Exhibit F">F</span>
         <h3>Saheli</h3>
         <div class="res"><b>CII Yi Yuva National Grand Finale 2026</b>Team lead</div>
-        <p class="desc">A WhatsApp-first labour marketplace for homebound women to take contracts from small businesses. Trust scores, UPI payouts and Hindi voice input.</p>
+        <p>A WhatsApp-first labour marketplace for homebound women to take contracts from small businesses. Trust scores, UPI payouts and Hindi voice input.</p>
       </article>
-      <article class="tp">
-        <span class="id">TP2</span>
+      <article class="card"><span class="tent" aria-label="Exhibit G">G</span>
         <h3>GreenLight</h3>
         <div class="res"><b>Smart India Hackathon 2025 national finalist, IIIT Dharwad</b>Primary presenter</div>
-        <p class="desc">Intelligent traffic optimisation, tested with SUMO simulations on Linux. I presented it to the jury.</p>
+        <p>Intelligent traffic optimisation, tested with SUMO simulations on Linux. I presented it to the jury.</p>
       </article>
-      <article class="tp">
-        <span class="id">TP3</span>
+      <article class="card"><span class="tent" aria-label="Exhibit H">H</span>
         <h3>One True Friend</h3>
         <div class="res"><b>SAP Hackfest North Region 2026, finale round</b>Team lead</div>
-        <p class="desc">An inclusive workforce intelligence platform, taken to the grand finale round.</p>
+        <p>An inclusive workforce intelligence platform, taken to the grand finale round.</p>
       </article>
     </div>
   </div>
@@ -355,7 +364,7 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
 
 <section id="kit">
   <div class="wrap">
-    <div class="sec-head"><h2>Toolbench</h2><p class="sec-note">CGPA 8.58 after two semesters, no backlogs.</p></div>
+    <div class="sec-head"><h2>Lab kit</h2></div>
     <div class="kit">
       <div><h4>Hardware</h4><p>ChipWhisperer Husky, PhyWhisperer USB, SPI analysis, USB forensics, Ghidra.</p></div>
       <div><h4>Forensics and malware</h4><p>FlareVM and REMnux in a host-only home lab, Wireshark, Nmap. Cisco Defense Analyst pathway with Splunk.</p></div>
@@ -383,328 +392,252 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
 <script>
 (() => {
   "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const canHover = window.matchMedia("(hover: hover)").matches;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const mulberry32 = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
-  /* ---------- Scroll progress ---------- */
-  const bar = document.getElementById("progress");
+  /* ---------- progress + active nav ---------- */
+  const bar = $("#progress");
   const onScroll = () => {
-    const h = document.documentElement.scrollHeight - window.innerHeight;
-    bar.style.transform = "scaleX(" + (h > 0 ? window.scrollY / h : 0) + ")";
+    const h = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = "scaleX(" + (h > 0 ? scrollY / h : 0) + ")";
   };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
-
-  /* ---------- Die model (unit square) ---------- */
-  const BLOCKS = [
-    { n: "FIRMWARE",     x: .12, y: .12, w: .30, h: .26, k: "logic", side: "t" },
-    { n: "SRAM",         x: .46, y: .12, w: .20, h: .26, k: "mem",   side: "t" },
-    { n: "SPI",          x: .70, y: .12, w: .18, h: .14, k: "logic", side: "t" },
-    { n: "PIN COUNTER",  x: .70, y: .30, w: .18, h: .10, k: "logic", side: "r" },
-    { n: "KEY STORE",    x: .12, y: .42, w: .26, h: .22, k: "mem",   side: "l" },
-    { n: "CRYPTO",       x: .42, y: .42, w: .26, h: .22, k: "logic", side: null },
-    { n: "TRNG",         x: .72, y: .44, w: .16, h: .20, k: "logic", side: "r" },
-    { n: "ROM",          x: .12, y: .68, w: .36, h: .20, k: "mem",   side: "b" },
-    { n: "POWER + CLOCK",x: .52, y: .68, w: .36, h: .20, k: "logic", side: "b" }
-  ];
-  const NPAD = 18;
-  const padU = (i) => .1 + .8 * i / (NPAD - 1);
-
-  const routes = [];
-  (function buildRoutes() {
-    const r = mulberry32(21);
-    BLOCKS.forEach((b) => {
-      if (!b.side) return;
-      for (let k = 0; k < 3; k++) {
-        const f = (k + 1) / 4;
-        const jit = Math.round((r() - .5) * 4);
-        if (b.side === "t" || b.side === "b") {
-          const sx = b.x + b.w * f, sy = b.side === "t" ? b.y : b.y + b.h;
-          const pi = clamp(Math.round(((sx - .1) / .8) * (NPAD - 1)) + jit, 0, NPAD - 1);
-          const px = padU(pi);
-          const yj = b.side === "t" ? .098 - r() * .02 : .902 + r() * .02;
-          const py = b.side === "t" ? .066 : .934;
-          routes.push([[sx, sy], [sx, yj], [px, yj], [px, py]]);
-        } else {
-          const sy = b.y + b.h * f, sx = b.side === "l" ? b.x : b.x + b.w;
-          const pi = clamp(Math.round(((sy - .1) / .8) * (NPAD - 1)) + jit, 0, NPAD - 1);
-          const py = padU(pi);
-          const xj = b.side === "l" ? .098 - r() * .02 : .902 + r() * .02;
-          const px = b.side === "l" ? .066 : .934;
-          routes.push([[sx, sy], [xj, sy], [xj, py], [px, py]]);
-        }
-      }
-    });
-    [[.44, .12, .44, .64], [.69, .12, .69, .64], [.10, .40, .90, .40], [.10, .66, .90, .66],
-     [.40, .42, .40, .64], [.12, .395, .88, .395], [.12, .665, .88, .665], [.67, .30, .70, .30]]
-      .forEach((s) => routes.push([[s[0], s[1]], [s[2], s[3]]]));
-    routes.forEach((rt) => {
-      let L = 0; rt.cum = [0];
-      for (let i = 1; i < rt.length; i++) { L += Math.hypot(rt[i][0] - rt[i - 1][0], rt[i][1] - rt[i - 1][1]); rt.cum.push(L); }
-      rt.len = L;
-    });
-  })();
-  const pointAt = (rt, s) => {
-    for (let i = 1; i < rt.length; i++) {
-      if (s <= rt.cum[i]) { const f = (s - rt.cum[i - 1]) / (rt.cum[i] - rt.cum[i - 1] || 1); return [rt[i - 1][0] + (rt[i][0] - rt[i - 1][0]) * f, rt[i - 1][1] + (rt[i][1] - rt[i - 1][1]) * f]; }
-    }
-    return rt[rt.length - 1];
-  };
-
-  const pulses = [];
-  (function () {
-    const r = mulberry32(5);
-    routes.forEach((rt, i) => { for (let k = 0; k < 2; k++) pulses.push({ rt, s: r(), v: (.18 + r() * .28) * (r() > .5 ? 1 : -1) }); });
-  })();
-
-  // 62 findings, placed inside blocks (illustrative)
-  const findings = [];
-  (function () {
-    const r = mulberry32(62);
-    let n = 0;
-    while (findings.length < 62) {
-      const b = BLOCKS[n++ % BLOCKS.length];
-      findings.push({ u: b.x + .015 + r() * (b.w - .03), v: b.y + .03 + r() * (b.h - .045) });
-    }
-  })();
-
-  /* ---------- Canvas ---------- */
-  const cv = document.getElementById("die");
-  const ctx = cv.getContext("2d");
-  const hero = document.getElementById("hero");
-  let W = 0, H = 0, dpr = 1, S = 0, cx = 0, cy = 0, R = 150;
-  let layerA, layerB, tmp, tctx;
-  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
-  const mapX = (u) => cx - S / 2 + u * S;
-  const mapY = (v) => cy - S / 2 + v * S;
-
-  function drawLayer(c, xr) {
-    const pal = xr
-      ? { die: "#03140f", blk: "#0a3d2f", edge: "#e8c66b", cell: "rgba(232,198,107,.5)", tr: "rgba(255,215,106,.85)", pad: "#ffd76a" }
-      : { die: "#0b2f26", blk: "#0e3b2f", edge: "#1f6150", cell: "rgba(217,180,90,.11)", tr: "rgba(217,180,90,.3)", pad: "#b8933f" };
-    const rnd = mulberry32(7);
-    c.save();
-    // die body
-    c.fillStyle = pal.die; c.fillRect(mapX(0), mapY(0), S, S);
-    c.lineWidth = xr ? 2 : 1.5; c.strokeStyle = pal.edge; c.strokeRect(mapX(0), mapY(0), S, S);
-    c.setLineDash([5, 5]); c.lineWidth = 1; c.strokeRect(mapX(.085), mapY(.085), S * .83, S * .83); c.setLineDash([]);
-    // traces
-    c.strokeStyle = pal.tr; c.lineWidth = xr ? 1.6 : 1; c.lineJoin = "miter";
-    routes.forEach((rt) => { c.beginPath(); rt.forEach((p, i) => { const x = mapX(p[0]), y = mapY(p[1]); i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.stroke(); });
-    // blocks
-    BLOCKS.forEach((b) => {
-      const x = mapX(b.x), y = mapY(b.y), w = b.w * S, h = b.h * S;
-      c.fillStyle = pal.blk; c.fillRect(x, y, w, h);
-      c.strokeStyle = pal.edge; c.lineWidth = xr ? 1.6 : 1; c.strokeRect(x, y, w, h);
-      c.fillStyle = pal.cell; c.strokeStyle = pal.cell;
-      if (b.k === "mem") {
-        const step = Math.max(4, S * .0085);
-        c.lineWidth = 1; c.beginPath();
-        for (let gx = x + step; gx < x + w - 2; gx += step) { c.moveTo(gx, y + 4); c.lineTo(gx, y + h - 4); }
-        for (let gy = y + step; gy < y + h - 2; gy += step) { c.moveTo(x + 4, gy); c.lineTo(x + w - 4, gy); }
-        c.stroke();
-      } else {
-        const rowH = Math.max(4, S * .0075);
-        for (let gy = y + 6; gy < y + h - rowH - 3; gy += rowH + 2) {
-          let gx = x + 6;
-          while (gx < x + w - 10) { const cw = 4 + rnd() * 14; if (rnd() > .28) c.fillRect(gx, gy, Math.min(cw, x + w - 6 - gx), rowH); gx += cw + 2; }
-        }
-      }
-    });
-    // bond pads
-    c.fillStyle = pal.pad; const ps = S * .02;
-    for (let i = 0; i < NPAD; i++) {
-      const u = padU(i);
-      c.fillRect(mapX(u) - ps / 2, mapY(.045) - ps / 2, ps, ps);
-      c.fillRect(mapX(u) - ps / 2, mapY(.955) - ps / 2, ps, ps);
-      c.fillRect(mapX(.045) - ps / 2, mapY(u) - ps / 2, ps, ps);
-      c.fillRect(mapX(.955) - ps / 2, mapY(u) - ps / 2, ps, ps);
-    }
-    if (xr) {
-      const hr = mulberry32(99);
-      c.fillStyle = "rgba(241,243,235,.22)"; c.font = "400 " + Math.max(8, S * .0125) + "px JetBrains Mono, monospace";
-      BLOCKS.forEach((b) => {
-        const x = mapX(b.x), y = mapY(b.y);
-        for (let i = 0; i < 6; i++) {
-          let line = ""; for (let j = 0; j < 9; j++) line += Math.floor(hr() * 256).toString(16).padStart(2, "0") + " ";
-          c.fillText(line, x + 8, y + b.h * S - 8 - i * S * .0165);
-        }
-      });
-      c.textBaseline = "top";
-      BLOCKS.forEach((b) => {
-        c.fillStyle = "#f1f3eb"; c.font = "800 " + Math.max(13, S * .03) + "px Big Shoulders Display, Arial Narrow, sans-serif";
-        c.fillText(b.n, mapX(b.x) + 9, mapY(b.y) + 7);
-      });
-      c.textBaseline = "alphabetic";
-      findings.forEach((f) => {
-        const x = mapX(f.u), y = mapY(f.v), s = Math.max(3.5, S * .0065);
-        c.fillStyle = "#ff4d2e"; c.beginPath(); c.moveTo(x, y - s); c.lineTo(x + s, y); c.lineTo(x, y + s); c.lineTo(x - s, y); c.closePath(); c.fill();
-      });
-    }
-    c.restore();
-  }
-
-  function layout() {
-    const r = hero.getBoundingClientRect();
-    W = Math.round(r.width); H = Math.round(r.height);
-    dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    const narrow = W < 820;
-    S = narrow ? Math.min(W * .94, H * .52) : Math.min(H * .86, W * .54);
-    cx = narrow ? W / 2 : W * .69;
-    cy = narrow ? H * .34 : H * .5;
-    R = clamp(S * .22, 90, 190);
-    layerA = mk(W * dpr, H * dpr); layerB = mk(W * dpr, H * dpr);
-    const a = layerA.getContext("2d"), b = layerB.getContext("2d");
-    a.scale(dpr, dpr); b.scale(dpr, dpr);
-    drawLayer(a, false); drawLayer(b, true);
-    tmp = mk(2 * R * dpr, 2 * R * dpr); tctx = tmp.getContext("2d");
-  }
-
-  /* ---------- Probe state ---------- */
-  const probe = { x: 0, y: 0, tx: 0, ty: 0, last: 0, active: false };
-  const t0 = performance.now();
-  let running = false, prev = performance.now();
-
-  function setTarget(clientX, clientY) {
-    const r = hero.getBoundingClientRect();
-    probe.tx = clientX - r.left; probe.ty = clientY - r.top; probe.last = performance.now(); probe.active = true;
-  }
-  hero.addEventListener("pointermove", (e) => setTarget(e.clientX, e.clientY));
-  hero.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") setTarget(e.clientX, e.clientY); });
-  cv.addEventListener("keydown", (e) => {
-    const step = 40, m = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
-    if (!m) return;
-    e.preventDefault(); probe.tx = clamp(probe.tx + m[0], 0, W); probe.ty = clamp(probe.ty + m[1], 0, H); probe.last = performance.now(); probe.active = true;
-  });
-
-  function blockAt(u, v) { return BLOCKS.find((b) => u >= b.x && u <= b.x + b.w && v >= b.y && v <= b.y + b.h); }
-
-  function frame(now) {
-    if (!running) return;
-    const dt = Math.min(.05, (now - prev) / 1000); prev = now;
-    const el = (now - t0) / 1000;
-    const intro = reduce ? 1 : clamp(el / 1.4, 0, 1);
-
-    // target: pointer, else a slow scan over the die
-    if (!probe.active || now - probe.last > 4000) {
-      probe.tx = cx + Math.sin(now * .00042) * S * .34;
-      probe.ty = cy + Math.sin(now * .00071 + 1) * S * .3;
-    }
-    const dtMove = Math.min(.25, (now - (frame.last || now)) / 1000); frame.last = now;
-    const k = 1 - Math.exp(-dtMove * (el < 1.8 ? 3.2 : 9));
-    probe.x += (probe.tx - probe.x) * k; probe.y += (probe.ty - probe.y) * k;
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
-    ctx.drawImage(layerA, 0, 0, W, H);
-
-    // pulses
-    ctx.save(); ctx.globalCompositeOperation = "lighter";
-    pulses.forEach((p) => {
-      if (!reduce) p.s = ((p.s + p.v * dt) % 1 + 1) % 1;
-      const L = p.rt.len;
-      for (let i = 0; i < 6; i++) {
-        const s = (((p.s - Math.sign(p.v) * i * .012) % 1) + 1) % 1;
-        const pt = pointAt(p.rt, s * L);
-        ctx.fillStyle = "rgba(255,215,106," + ((.95 - i * .15) * intro) + ")";
-        ctx.beginPath(); ctx.arc(mapX(pt[0]), mapY(pt[1]), 2.4 - i * .25, 0, 6.2832); ctx.fill();
-      }
-    });
-    ctx.restore();
-
-    // x-ray lens
-    const px = probe.x, py = probe.y, rr = R * (reduce ? 1 : (.35 + .65 * intro));
-    const sx = px - rr, sy = py - rr, sz = 2 * rr;
-    tctx.setTransform(1, 0, 0, 1, 0, 0);
-    tctx.globalCompositeOperation = "source-over";
-    tctx.clearRect(0, 0, tmp.width, tmp.height);
-    tctx.drawImage(layerB, sx * dpr, sy * dpr, sz * dpr, sz * dpr, 0, 0, tmp.width, tmp.height);
-    tctx.globalCompositeOperation = "destination-in";
-    const g = tctx.createRadialGradient(tmp.width / 2, tmp.height / 2, tmp.width * .36, tmp.width / 2, tmp.height / 2, tmp.width / 2);
-    g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)");
-    tctx.fillStyle = g; tctx.fillRect(0, 0, tmp.width, tmp.height);
-    ctx.drawImage(tmp, sx, sy, sz, sz);
-
-    // probe graphics
-    ctx.strokeStyle = "#ff4d2e"; ctx.lineWidth = 1.5;
-    ctx.setLineDash([7, 7]); ctx.lineDashOffset = -now * .02;
-    ctx.beginPath(); ctx.arc(px, py, rr * .98, 0, 6.2832); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(px - 14, py); ctx.lineTo(px + 14, py); ctx.moveTo(px, py - 14); ctx.lineTo(px, py + 14); ctx.stroke();
-    ctx.fillStyle = "#ff4d2e"; ctx.beginPath(); ctx.arc(px, py, 3, 0, 6.2832); ctx.fill();
-    const u = (px - (cx - S / 2)) / S, v = (py - (cy - S / 2)) / S;
-    const inDie = u >= 0 && u <= 1 && v >= 0 && v <= 1;
-    const bl = inDie ? blockAt(u, v) : null;
-    const label = inDie ? "u=" + u.toFixed(2) + " v=" + v.toFixed(2) + "  " + (bl ? bl.n : "interconnect") : "off die";
-    ctx.font = "500 11px JetBrains Mono, monospace";
-    const tw = ctx.measureText(label).width + 14, tx = clamp(px - tw / 2, 8, W - tw - 8), ty = clamp(py + rr + 8, 8, H - 30);
-    ctx.fillStyle = "rgba(4,26,21,.92)"; ctx.fillRect(tx, ty, tw, 20);
-    ctx.fillStyle = "#f1f3eb"; ctx.fillText(label, tx + 7, ty + 14);
-
-    requestAnimationFrame(frame);
-  }
-
-  function start() { if (running) return; running = true; prev = performance.now(); requestAnimationFrame(frame); }
-  function stop() { running = false; }
-
-  function init() {
-    layout();
-    probe.x = reduce ? cx : cx - S * .75; probe.y = cy;
-    probe.tx = cx; probe.ty = cy;
-    start();
-  }
-  const ready = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve();
-  ready.then(init);
-  let rz;
-  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (layerA) layout(); }, 150); });
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  const links = [...document.querySelectorAll("#nav a[href^='#']")];
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver((es) => { es[0].isIntersecting ? (layerA && start()) : stop(); }, { threshold: 0 }).observe(hero);
+    const map = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => { if (e.isIntersecting) { links.forEach((l) => l.classList.remove("on")); const l = map.get(e.target.id); if (l && e.target.id !== "hero") l.classList.add("on"); } });
+    }, { rootMargin: "-45% 0px -50% 0px" });
+    map.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+    const hero = $("#hero"); if (hero) io.observe(hero);
   }
-  document.addEventListener("visibilitychange", () => { document.hidden ? stop() : (layerA && start()); });
 
-  /* ---------- Counters ---------- */
+  /* ---------- count-up on the evidence bags ---------- */
   const counters = document.querySelectorAll("[data-count]");
   if (!reduce && "IntersectionObserver" in window) {
-    const io = new IntersectionObserver((es) => {
-      es.forEach((e) => {
-        if (!e.isIntersecting) return;
-        io.unobserve(e.target);
-        const el = e.target, end = +el.dataset.count, t1 = performance.now();
-        const tick = (n) => { const p = clamp((n - t1) / 1300, 0, 1); el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(tick); };
-        el.textContent = "0"; requestAnimationFrame(tick);
-      });
-    }, { threshold: .6 });
-    counters.forEach((c) => io.observe(c));
+    const co = new IntersectionObserver((es, o) => es.forEach((e) => {
+      if (!e.isIntersecting) return; o.unobserve(e.target);
+      const end = +e.target.dataset.count, t0 = performance.now();
+      const step = (n) => { const p = clamp((n - t0) / 1100, 0, 1); e.target.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }), { threshold: .6 });
+    counters.forEach((c) => co.observe(c));
   }
 
-  /* ---------- Panel tilt ---------- */
-  if (!reduce && canHover) {
-    document.querySelectorAll("[data-tilt]").forEach((p) => {
-      p.addEventListener("pointermove", (e) => {
-        const r = p.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-        p.style.setProperty("--mx", (x * 100) + "%"); p.style.setProperty("--my", (y * 100) + "%");
-        p.style.transform = "rotateX(" + ((.5 - y) * 4).toFixed(2) + "deg) rotateY(" + ((x - .5) * 5).toFixed(2) + "deg)";
+  /* ---------- Hero: the UV lamp ---------- */
+  (function hero() {
+    const hero = $("#hero"), cv = $("#uv"); if (!cv) return;
+    const ctx = cv.getContext("2d");
+    const hid = document.createElement("canvas"), hx = hid.getContext("2d");
+    const tmp = document.createElement("canvas"), tx = tmp.getContext("2d");
+    const btn = $("#lights"), hud = $("#hud");
+    const NOTES = [
+      { t: "62 confirmed findings", d: [.09, .13, -.03], m: [.5, .555, -.02] },
+      { t: "TROPIC01 / IIT Bhilai", d: [.31, .25, .02], m: [.26, .105, .03] },
+      { t: "IJCACI 2026, presented", d: [.54, .12, -.02], m: [.75, .105, -.03] },
+      { t: "SIH 2025 national finalist", d: [.86, .095, .02], m: [.5, .855, .02] },
+      { t: "OWASP Nettacker", d: [.60, .88, -.03], m: [.27, .89, -.02] },
+      { t: "RansomGuard (solo)", d: [.89, .90, .02], m: [.74, .515, .03] },
+      { t: "IIT Ropar / VLED Lab", d: [.42, .34, -.02], m: [.27, .515, -.03] },
+      { t: "open for summer 2027", d: [.70, .955, .01], m: [.72, .89, -.01] }
+    ];
+    let W = 0, H = 0, dpr = 1, R = 220, notes = [], motes = [];
+    const lamp = { x: 0, y: 0 }, ptr = { x: 0, y: 0 }; let lastInput = -1e9, lit = reduce ? 1 : 0, target = lit, vis = true, found = 0, dirty = true;
+    const stretch = "fontStretch" in ctx;
+
+    function printPath(c, cx, cy, r0, rnd) {
+      c.save(); c.translate(cx, cy);
+      c.beginPath(); c.ellipse(0, 0, r0 * .8, r0, 0, 0, 6.2832); c.clip();
+      const sp = r0 / 33, ends = [];
+      c.lineCap = "round"; c.lineWidth = sp * .44;
+      const g = c.createLinearGradient(-r0, -r0, r0, r0); g.addColorStop(0, "#d6c4ff"); g.addColorStop(.5, "#8b5cff"); g.addColorStop(1, "#4aa8ff");
+      c.strokeStyle = g; c.shadowColor = "#8b5cff"; c.shadowBlur = sp * 1.3;
+      for (let i = 1; i <= 43; i++) {
+        const r = i * sp, a = .035 + .03 * Math.min(1, i / 14), p1 = rnd() * 6.28, p2 = rnd() * 6.28, p3 = rnd() * 6.28;
+        const pt = (t) => { const k = 1 + a * Math.sin(2 * t + p1) + .022 * Math.sin(5 * t + p2) + .012 * Math.sin(9 * t + p3); return [r * k * .86 * Math.cos(t), r * k * Math.sin(t) - r0 * .06 * (1 - i / 43)]; };
+        let gap = 0, drawing = false;
+        for (let t = 0; t <= 6.2832; t += .045) {
+          const [x, y] = pt(t);
+          if (gap > 0) { gap--; if (gap === 0) { c.beginPath(); c.moveTo(x, y); drawing = true; if (i > 4) ends.push([x, y]); } continue; }
+          if (!drawing) { c.beginPath(); c.moveTo(x, y); drawing = true; continue; }
+          if (i > 4 && rnd() < .009) { c.stroke(); drawing = false; gap = 5 + Math.floor(rnd() * 11); ends.push([x, y]); continue; }
+          c.lineTo(x, y);
+        }
+        if (drawing) c.stroke();
+      }
+      c.restore();
+      return ends;
+    }
+
+    function build() {
+      hid.width = Math.round(W * dpr); hid.height = Math.round(H * dpr);
+      hx.setTransform(dpr, 0, 0, dpr, 0, 0); hx.clearRect(0, 0, W, H);
+      const mob = W < 760, rnd = mulberry32(2611);
+      const fr = mob ? Math.min(W * .36, H * .19) : Math.min(H * .4, W * .27);
+      const fx = mob ? W * .5 : W * .72, fy = mob ? H * .31 : H * .5;
+      const ends = printPath(hx, fx, fy, fr, rnd);
+      /* minutiae markup */
+      const picks = ends.filter(([x, y]) => { const d = Math.hypot(x, y * .8); return d > fr * .25 && d < fr * .75; });
+      hx.save(); hx.translate(fx, fy); hx.shadowBlur = 0; hx.strokeStyle = "#ffd23f"; hx.fillStyle = "#ffd23f"; hx.lineWidth = 1.5; hx.font = "700 " + (mob ? 10 : 12) + "px 'Courier Prime',monospace";
+      const used = []; let n = 0;
+      for (const [x, y] of picks) {
+        if (n >= 7) break; if (used.some(([a, b]) => Math.hypot(a - x, b - y) < fr * .28)) continue;
+        used.push([x, y]); n++; const s = mob ? 14 : 18; hx.strokeRect(x - s / 2, y - s / 2, s, s); hx.fillText(String(n), x + s / 2 + 4, y - s / 2 + 2);
+      }
+      hx.restore();
+      /* name + tagline */
+      const nameSize = mob ? Math.min(W * .15, 84) : Math.min(W * .14, H * .2, 220);
+      const left = mob ? W / 2 : W * .06, align = mob ? "center" : "left";
+      const base2 = mob ? H * .66 + nameSize * .9 : H * .7;
+      hx.save(); hx.textAlign = align; hx.textBaseline = "alphabetic";
+      if (stretch) hx.fontStretch = "expanded";
+      hx.font = "900 " + nameSize + "px Archivo,'Arial Black',sans-serif";
+      const wmax = mob ? W * .9 : W * .44;
+      const w1 = hx.measureText("PARNEET").width, sc = Math.min(1, wmax / w1);
+      hx.font = "900 " + (nameSize * sc) + "px Archivo,'Arial Black',sans-serif";
+      hx.fillStyle = "#d9f4ff"; hx.shadowColor = "#4aa8ff"; hx.shadowBlur = 30;
+      hx.fillText("PARNEET", left, base2 - nameSize * sc * .92); hx.fillText("KAUR", left, base2);
+      hx.restore();
+      hx.save(); hx.textAlign = align; hx.font = "400 " + (mob ? 14 : 18) + "px 'Courier Prime',monospace"; hx.fillStyle = "#c9b2ff"; hx.shadowColor = "#8b5cff"; hx.shadowBlur = 10;
+      const tag = "I test whether secure chips do what their datasheets say. Hardware security and digital forensics.";
+      const maxw = mob ? W * .86 : W * .42, words = tag.split(" "); let line = "", y = base2 + (mob ? 30 : 42);
+      for (const w of words) { const test = line ? line + " " + w : w; if (hx.measureText(test).width > maxw && line) { hx.fillText(line, left, y); line = w; y += mob ? 20 : 26; } else line = test; }
+      hx.fillText(line, left, y); hx.restore();
+      /* notes */
+      notes = NOTES.map((nt, i) => {
+        const p = mob ? nt.m : nt.d, x = p[0] * W, yy = p[1] * H;
+        hx.save(); hx.translate(x, yy); hx.rotate(p[2]); hx.textAlign = "center";
+        hx.font = "italic 700 " + (mob ? 13 : 17) + "px 'Courier Prime',monospace"; hx.fillStyle = "#e9fbff"; hx.shadowColor = "#4aa8ff"; hx.shadowBlur = 16;
+        hx.fillText(nt.t, 0, 0);
+        const tw = hx.measureText(nt.t).width;
+        hx.beginPath(); hx.moveTo(-tw / 2, 7); hx.bezierCurveTo(-tw / 4, 11, tw / 4, 3, tw / 2, 8); hx.lineWidth = 1.6; hx.strokeStyle = "#4aa8ff"; hx.stroke();
+        hx.restore();
+        return { x, y: yy, r: tw / 2 + 24, got: notes[i] ? notes[i].got : false };
       });
-      p.addEventListener("pointerleave", () => { p.style.transform = ""; });
+      found = notes.filter((n) => n.got).length;
+      dirty = true;
+    }
+
+    function setHud() {
+      const on = btn.getAttribute("aria-pressed") === "true";
+      hud.innerHTML = on ? "<b>Lights are on.</b> Switch them off to hunt with the UV lamp."
+        : found >= notes.length && notes.length ? "<b>All " + notes.length + " marks logged.</b> The case file is below."
+        : "<b>" + found + " of " + NOTES.length + "</b> latent marks found. Sweep the UV lamp across the room.";
+    }
+
+    function layout() {
+      W = hero.clientWidth; H = hero.clientHeight; dpr = Math.min(2, devicePixelRatio || 1);
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      R = clamp(Math.min(W, H) * .34, 150, 300);
+      tmp.width = tmp.height = Math.ceil(2 * R * dpr);
+      if (!lamp.x) { lamp.x = ptr.x = W * .66; lamp.y = ptr.y = H * .46; }
+      const r = mulberry32(77); motes = Array.from({ length: 70 }, () => ({ x: r() * W, y: r() * H, vx: (r() - .5) * 8, vy: -4 - r() * 8, s: .6 + r() * 1.6, p: r() * 6.28 }));
+      build();
+    }
+
+    function update(n) {
+      if (n - lastInput > 2600 && !reduce) {
+        const t = n * .00042;
+        ptr.x = W * (.5 + .4 * Math.sin(t)); ptr.y = H * (.5 + .3 * Math.sin(t * 1.63 + 1));
+      }
+      const k = reduce ? 1 : .11; lamp.x += (ptr.x - lamp.x) * k; lamp.y += (ptr.y - lamp.y) * k;
+      lit += (target - lit) * (reduce ? 1 : .07); if (Math.abs(target - lit) < .002) lit = target;
+      if (lit < .9) notes.forEach((nt) => { if (!nt.got && Math.hypot(nt.x - lamp.x, nt.y - lamp.y) < Math.min(R * .62, nt.r + 20)) { nt.got = true; found++; setHud(); } });
+    }
+
+    function draw(dt) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = lit > .01 ? "rgb(" + Math.round(9 + 16 * lit) + "," + Math.round(6 + 12 * lit) + "," + Math.round(26 + 28 * lit) + ")" : "#09061a";
+      ctx.fillRect(0, 0, W, H);
+      /* faint ambient trace so the room is never blank */
+      ctx.globalAlpha = .06 + .94 * lit; ctx.drawImage(hid, 0, 0, W, H); ctx.globalAlpha = 1;
+      if (lit < .98) {
+        const bx = lamp.x - R, by = lamp.y - R, sz = 2 * R;
+        tx.setTransform(1, 0, 0, 1, 0, 0); tx.globalCompositeOperation = "source-over"; tx.clearRect(0, 0, tmp.width, tmp.height);
+        let sx = bx * dpr, sy = by * dpr, sw = sz * dpr, sh = sz * dpr, dx = 0, dy = 0;
+        if (sx < 0) { dx = -sx; sw += sx; sx = 0; } if (sy < 0) { dy = -sy; sh += sy; sy = 0; }
+        if (sx + sw > hid.width) sw = hid.width - sx; if (sy + sh > hid.height) sh = hid.height - sy;
+        if (sw > 0 && sh > 0) tx.drawImage(hid, sx, sy, sw, sh, dx, dy, sw, sh);
+        tx.globalCompositeOperation = "destination-in";
+        const g = tx.createRadialGradient(R * dpr, R * dpr, 0, R * dpr, R * dpr, R * dpr);
+        g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(.5, "rgba(0,0,0,.92)"); g.addColorStop(1, "rgba(0,0,0,0)");
+        tx.fillStyle = g; tx.fillRect(0, 0, tmp.width, tmp.height);
+        ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 1 - lit;
+        ctx.drawImage(tmp, bx, by, sz, sz); ctx.drawImage(tmp, bx, by, sz, sz);
+        /* beam bloom */
+        const b = ctx.createRadialGradient(lamp.x, lamp.y, 0, lamp.x, lamp.y, R * 1.35);
+        b.addColorStop(0, "rgba(139,92,255,.30)"); b.addColorStop(.45, "rgba(104,70,230,.12)"); b.addColorStop(1, "rgba(60,40,160,0)");
+        ctx.fillStyle = b; ctx.fillRect(lamp.x - R * 1.4, lamp.y - R * 1.4, R * 2.8, R * 2.8);
+        /* dust caught in the beam */
+        for (const m of motes) {
+          m.x += m.vx * dt; m.y += m.vy * dt; m.p += dt * 2;
+          if (m.y < -5) m.y = H + 5; if (m.x < -5) m.x = W + 5; if (m.x > W + 5) m.x = -5;
+          const d = Math.hypot(m.x - lamp.x, m.y - lamp.y); if (d > R * 1.1) continue;
+          ctx.fillStyle = "rgba(214,196,255," + ((1 - d / (R * 1.1)) * (.35 + .35 * Math.sin(m.p))) + ")";
+          ctx.beginPath(); ctx.arc(m.x, m.y, m.s, 0, 6.2832); ctx.fill();
+        }
+        ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = "rgba(214,196,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lamp.x, lamp.y, 11, 0, 6.2832); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(lamp.x - 19, lamp.y); ctx.lineTo(lamp.x - 6, lamp.y); ctx.moveTo(lamp.x + 6, lamp.y); ctx.lineTo(lamp.x + 19, lamp.y); ctx.moveTo(lamp.x, lamp.y - 19); ctx.lineTo(lamp.x, lamp.y - 6); ctx.moveTo(lamp.x, lamp.y + 6); ctx.lineTo(lamp.x, lamp.y + 19); ctx.stroke();
+      }
+    }
+
+    function move(e) { const r = hero.getBoundingClientRect(); ptr.x = clamp(e.clientX - r.left, 0, W); ptr.y = clamp(e.clientY - r.top, 0, H); lastInput = performance.now(); dirty = true; }
+    hero.addEventListener("pointermove", move); hero.addEventListener("pointerdown", move);
+    btn.addEventListener("click", () => {
+      const on = btn.getAttribute("aria-pressed") !== "true";
+      btn.setAttribute("aria-pressed", on); btn.textContent = on ? "Lights off" : "Lights on"; target = on ? 1 : 0; dirty = true; setHud();
     });
-  }
+    let prev = performance.now();
+    function frame(now) {
+      const dt = Math.min(.05, (now - prev) / 1000); prev = now;
+      if (vis && (!reduce || dirty)) { update(now); draw(dt); dirty = reduce ? (Math.abs(lamp.x - ptr.x) > .5 || lit !== target) : true; }
+      requestAnimationFrame(frame);
+    }
+    if ("IntersectionObserver" in window) new IntersectionObserver((es) => { vis = es[0].isIntersecting; }).observe(hero);
+    let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(layout, 150); });
+    if (reduce) { btn.setAttribute("aria-pressed", "true"); btn.textContent = "Lights off"; }
+    layout(); setHud();
+    if (document.fonts && document.fonts.load) {
+      Promise.all([document.fonts.load("900 100px Archivo"), document.fonts.load("700 16px 'Courier Prime'"), document.fonts.load("italic 700 16px 'Courier Prime'")]).then(build).catch(() => {});
+    }
+    requestAnimationFrame(frame);
+  })();
 
-  /* ---------- Topbar ---------- */
-  const topbar = document.getElementById("topbar");
-  const toggleBar = () => topbar.classList.toggle("show", window.scrollY > hero.offsetHeight * 0.85);
-  window.addEventListener("scroll", toggleBar, { passive: true });
-  toggleBar();
+  /* ---------- Evidence board strings ---------- */
+  (function board() {
+    const wrap = $("#boardwrap"), svg = $("#strings"); if (!wrap || !svg) return;
+    const NS = "http://www.w3.org/2000/svg";
+    const threads = [{ cls: "hw", ids: ["c-tropic", "c-token"] }, { cls: "rw", ids: ["c-ijcaci", "c-guard"] }];
+    function draw() {
+      const br = wrap.getBoundingClientRect(); svg.setAttribute("viewBox", "0 0 " + br.width + " " + br.height); svg.setAttribute("width", br.width); svg.setAttribute("height", br.height);
+      svg.textContent = "";
+      threads.forEach((th) => {
+        const p = th.ids.map((id) => { const r = $("#" + id + " .pin").getBoundingClientRect(); return [r.left + r.width / 2 - br.left, r.top + r.height / 2 - br.top]; });
+        const mid = [(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2], sag = 18 + Math.hypot(p[1][0] - p[0][0], p[1][1] - p[0][1]) * .06;
+        const d = "M" + p[0][0] + " " + p[0][1] + " Q" + mid[0] + " " + (mid[1] + sag) + " " + p[1][0] + " " + p[1][1];
+        ["sh", th.cls].forEach((c) => { const el = document.createElementNS(NS, "path"); el.setAttribute("d", d); el.setAttribute("pathLength", "1"); el.setAttribute("class", "th " + c); if (c === "sh") el.setAttribute("transform", "translate(2 5)"); svg.appendChild(el); });
+      });
+    }
+    draw();
+    let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(draw, 120); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+    if ("IntersectionObserver" in window && !reduce) new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { svg.classList.add("drawn"); o.disconnect(); } }, { threshold: .25 }).observe(wrap);
+    else svg.classList.add("drawn");
+    wrap.querySelectorAll(".card").forEach((c) => {
+      const t = c.dataset.th, on = () => { if (t !== "none") wrap.dataset.focus = t; }, off = () => { delete wrap.dataset.focus; };
+      c.addEventListener("pointerenter", on); c.addEventListener("pointerleave", off); c.addEventListener("focusin", on); c.addEventListener("focusout", off);
+    });
+  })();
 
   /* ---------- Power analysis demo (simulated) ---------- */
   (function () {
-    const cvs = document.getElementById("cpa");
-    if (!cvs) return;
+    const cvs = $("#cpa"); if (!cvs) return;
     const g2 = cvs.getContext("2d");
-    const slider = document.getElementById("ntr"), out = document.getElementById("ntrout"), read = document.getElementById("cpa-read");
-    const runBtn = document.getElementById("run"), keyBtn = document.getElementById("newkey");
+    const slider = $("#ntr"), out = $("#ntrout"), read = $("#cpa-read"), runBtn = $("#run"), keyBtn = $("#newkey");
     const rotl = (x, n) => ((x << n) | (x >> (8 - n))) & 0xff;
     const SB = new Uint8Array(256);
     (function () {
@@ -723,7 +656,6 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
     const NMAX = 400, SIGMA = 3.5;
     let seed = 20261121, key = 0, P = [], Lk = [], dpr2 = 1, runId = 0;
     const hex = (v) => "0x" + v.toString(16).toUpperCase().padStart(2, "0");
-
     function gen() {
       const r = mulberry32(seed);
       key = Math.floor(r() * 256); P = []; Lk = [];
@@ -743,15 +675,13 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
       return res;
     }
     function size() {
-      const w = cvs.parentElement.clientWidth - 48, h = w < 560 ? 230 : 290;
-      dpr2 = Math.min(2, window.devicePixelRatio || 1);
-      cvs.style.width = w + "px"; cvs.style.height = h + "px";
-      cvs.width = Math.round(w * dpr2); cvs.height = Math.round(h * dpr2);
+      const w = cvs.parentElement.clientWidth - (cvs.parentElement.clientWidth < 640 ? 32 : 48), h = w < 560 ? 230 : 300;
+      dpr2 = Math.min(2, devicePixelRatio || 1);
+      cvs.style.width = w + "px"; cvs.style.height = h + "px"; cvs.width = Math.round(w * dpr2); cvs.height = Math.round(h * dpr2);
     }
     function draw() {
       const n = +slider.value; out.textContent = n;
-      const res = corr(n);
-      let best = 0, rank = 1;
+      const res = corr(n); let best = 0, rank = 1;
       for (let g = 1; g < 256; g++) if (res[g] > res[best]) best = g;
       for (let g = 0; g < 256; g++) if (res[g] > res[key]) rank++;
       const W2 = cvs.width / dpr2, H2 = cvs.height / dpr2;
@@ -759,27 +689,27 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
       const L = 40, B = 28, T = 22, Rr = 8, pw = W2 - L - Rr, ph = H2 - B - T, bw = pw / 256;
       let mx = 0; for (let g = 0; g < 256; g++) if (res[g] > mx) mx = res[g];
       const max = Math.max(.4, mx * 1.15);
-      g2.font = "11px JetBrains Mono, monospace"; g2.textAlign = "right"; g2.textBaseline = "middle";
+      g2.font = "11px 'Courier Prime', monospace"; g2.textAlign = "right"; g2.textBaseline = "middle";
       for (let t = 0; t <= max + 1e-9; t += .1) {
         const y = T + ph - (t / max) * ph;
-        g2.strokeStyle = "rgba(241,243,235,.12)"; g2.beginPath(); g2.moveTo(L, y); g2.lineTo(L + pw, y); g2.stroke();
-        g2.fillStyle = "rgba(241,243,235,.6)"; g2.fillText(t.toFixed(1), L - 8, y);
+        g2.strokeStyle = "rgba(201,178,255,.13)"; g2.beginPath(); g2.moveTo(L, y); g2.lineTo(L + pw, y); g2.stroke();
+        g2.fillStyle = "rgba(220,215,250,.62)"; g2.fillText(t.toFixed(1), L - 8, y);
       }
       for (let g = 0; g < 256; g++) {
         const hgt = (res[g] / max) * ph;
-        g2.fillStyle = g === key ? "#d9b45a" : (g === best ? "#ff4d2e" : "rgba(241,243,235,.4)");
+        g2.fillStyle = g === key ? "#ffd23f" : (g === best ? "#ff5a4a" : "rgba(160,190,255,.45)");
         g2.fillRect(L + g * bw, T + ph - hgt, Math.max(1, bw - .5), hgt);
       }
-      g2.textAlign = "center"; g2.textBaseline = "top"; g2.fillStyle = "rgba(241,243,235,.6)";
+      g2.textAlign = "center"; g2.textBaseline = "top"; g2.fillStyle = "rgba(220,215,250,.62)";
       [["00", 0], ["40", 64], ["80", 128], ["C0", 192], ["FF", 255]].forEach((a) => g2.fillText("0x" + a[0], L + a[1] * bw + bw / 2, T + ph + 8));
       g2.textBaseline = "bottom";
       const lab = (g, txt, col) => {
         const x = Math.min(L + pw - 36, Math.max(L + 36, L + g * bw + bw / 2)), y = T + ph - (res[g] / max) * ph - 4;
         g2.fillStyle = col; g2.fillText(txt, x, Math.max(14, y));
       };
-      g2.font = "700 12px JetBrains Mono, monospace";
-      if (best !== key) lab(best, "guess " + hex(best), "#ff4d2e");
-      lab(key, "key " + hex(key), "#d9b45a");
+      g2.font = "700 12px 'Courier Prime', monospace";
+      if (best !== key) lab(best, "guess " + hex(best), "#ff5a4a");
+      lab(key, "key " + hex(key), "#ffd23f");
       read.textContent = best === key
         ? "With " + n + " traces the top guess is " + hex(best) + ", which is the real key byte. Recovered."
         : "With " + n + " traces the top guess is " + hex(best) + ", but the real key byte is " + hex(key) + ", ranked " + rank + " of 256. Add traces.";
@@ -789,30 +719,30 @@ h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 800; font-size:
     runBtn.addEventListener("click", () => {
       const id = ++runId;
       if (reduce) { slider.value = NMAX; draw(); return; }
-      const a = performance.now(), from = 5, dur = 5500;
-      slider.value = from;
+      const a = performance.now(), from = 5, dur = 5500; slider.value = from;
       const step = (now) => {
         if (id !== runId) return;
         const p = clamp((now - a) / dur, 0, 1);
-        slider.value = Math.round(from + (NMAX - from) * (1 - Math.pow(1 - p, 2)));
-        draw();
+        slider.value = Math.round(from + (NMAX - from) * (1 - Math.pow(1 - p, 2))); draw();
         if (p < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
     });
-    let rz2;
-    window.addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(() => { size(); draw(); }, 120); });
+    let rz2; addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(() => { size(); draw(); }, 120); });
     gen(); size(); draw();
-    const fontsReady = document.fonts && document.fonts.ready;
-    if (fontsReady) fontsReady.then(() => draw());
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
   })();
 
-  /* ---------- Boot log ---------- */
-  const lb = document.getElementById("logbox");
+  /* ---------- Chain of custody reveal ---------- */
+  const lb = $("#logbox");
   if (lb && !reduce && "IntersectionObserver" in window) {
     lb.classList.add("armed");
-    new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { lb.classList.add("play"); o.disconnect(); } }, { threshold: .15 }).observe(lb);
+    new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { lb.classList.add("play"); o.disconnect(); } }, { threshold: .1 }).observe(lb);
   }
+
+  /* ---------- Contact: the lamp follows you down here too ---------- */
+  const ct = $("#contact");
+  if (ct && !reduce) ct.addEventListener("pointermove", (e) => { const r = ct.getBoundingClientRect(); ct.style.setProperty("--mx", (e.clientX - r.left) + "px"); ct.style.setProperty("--my", (e.clientY - r.top) + "px"); });
 })();
 </script>
 </body>
