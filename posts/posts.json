@@ -9,5 +9,16 @@
       "machine-learning"
     ],
     "minutes": 4
+  },
+  {
+    "slug": "projects-to-date",
+    "title": "Projects to date",
+    "date": "2026-11-27",
+    "summary": "Every project I can date since August 2025: hardware security, ransomware research, an intrusion detector, open source and competition teams, with what state each is in.",
+    "tags": [
+      "projects",
+      "overview"
+    ],
+    "minutes": 5
   }
 ]
