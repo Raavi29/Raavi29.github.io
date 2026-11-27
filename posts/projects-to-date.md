@@ -6,7 +6,7 @@ The projects I have worked on since I started my B.Tech in August 2025, with dat
 
 ### TROPIC01 secure element analysis (June 2026 onwards, in progress)
 
-An independent analysis of Tropic Square's TROPIC01 development kit at the de.ci.phe.red Lab, IIT Bhilai, under Dr. Dhiman Saha. The datasheet makes claims about what the chip protects, and this project tests them against the hardware. The work covers reconnaissance of the USB descriptors, the SPI protocol tested against the conformance spec, the STM32 firmware decompiled in Ghidra, and the Mac-and-Destroy PIN lockout checked across 11 wrong PINs. The work produced 62 findings and a conformance test suite that I delivered to the lab. The code and the report are lab-restricted, so there is no public repository.
+An independent analysis of Tropic Square's TROPIC01 development kit at the de.ci.phe.red Lab, IIT Bhilai, under Dr. Dhiman Saha. The datasheet makes claims about what the chip protects, and this project tests them against the hardware. The work covers reconnaissance of the USB descriptors, raw SPI commands tested in software against the conformance spec, five functions of the STM32 firmware decompiled in Ghidra, and the Mac-and-Destroy PIN lockout checked across 11 wrong PINs. It produced 62 findings and a conformance test suite that I delivered to the lab. As of my 27 June 2026 report, the software analysis is complete and the hardware analysis, power analysis and SPI bus analysis, has not started. The code and the report are lab-restricted, so there is no public repository.
 
 ### TrusToken (June to August 2026, private)
 
@@ -40,7 +40,7 @@ A Python IDS that groups packets into flows and scores each flow with an Isolati
 
 ### OWASP Nettacker (merged 15 April 2026)
 
-One merged pull request, #1487, with pytest tests for the FTP and FTPS brute-force libraries. I applied to GSoC 2026, was not selected, and still contribute.
+One merged pull request, #1487, merged on 15 April 2026. It adds pytest tests for the FTP and FTPS brute-force libraries and a small fix that closes the FTP connection after a brute-force attempt. I also proposed detection modules for two Fortinet CVEs (#1502 and #1490). I closed #1502 after maintainers asked for testing against a real or simulated vulnerable instance, and neither was merged. I applied to GSoC 2026, was not selected, and still contribute.
 
 ### This site (November 2026)
 
@@ -52,9 +52,11 @@ A small Express app that stores uploads in SQLite and returns a unique ID for do
 
 ## Competition teams
 
-### Green Light, Smart India Hackathon 2025 (repositories dated November 2025 and March 2026)
+### Green Light, Smart India Hackathon 2025 (national finalist)
 
-Adaptive traffic-signal control as Team Void Pointers from DBS Global University, a national finalist at IIIT Dharwad, where I was the primary presenter. The first prototype, from November 2025, counts vehicles in a lane region with YOLOv8n and applies a simple rule: more than 10 vehicles extends the green phase by 5 seconds, up to a 30 second cap. The hardware output is a stub. The March 2026 version of the repository documents a FastAPI backend with vision, prediction and optimisation endpoints and holds the React and Vite dashboard. We tested the idea with SUMO simulations on Linux. Code: [Raavi29/Green_Light_Team_Void_Pointers](https://github.com/Raavi29/Green_Light_Team_Void_Pointers) and [Raavi29/Void-Pointers](https://github.com/Raavi29/Void-Pointers).
+An adaptive traffic-signal system built by Team Void Pointers (six students from DBS Global University) for a national finalist place at IIIT Dharwad, where I was the primary presenter. The final code is about 3,400 lines of Python. It detects vehicles in camera feeds with a YOLO model, tracks them with an IoU matcher and a Kalman filter, and passes the result to a decision engine and a risk evaluator. The risk evaluator weighs five behaviours (gap insertion, side cutting, wrong-way driving, red-light jumping and speeding) and recommends extending the green phase, raising an alert or an emergency stop. Other parts are emergency-vehicle detection, a FastAPI server with one engine per camera, a threaded multi-camera manager and a WebSocket viewer. We tested the control logic in SUMO, and the code includes the SUMO network, routes, detectors and signal plan.
+
+For detection I trained a YOLOv5l model for 50 epochs at 640 px on the India Driving Dataset, with 31,569 training and 10,225 validation images across 15 classes that include autorickshaws and riders. The last of three training runs reached precision 0.78, recall 0.35 and mAP@0.5 of 0.40 on validation. The final code is not in a public repository yet.
 
 ### One True Friend, SAP Hackfest North Region 2026 (August 2026)
 

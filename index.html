@@ -265,10 +265,10 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
           <p>An independent analysis of Tropic Square's TROPIC01 development kit. A datasheet makes claims about what the chip protects. This project tests them against the hardware. It produced 62 confirmed findings and a conformance test suite that I built and delivered to the lab.</p>
           <ul class="flow">
             <li><b>USB</b>Descriptor reconnaissance</li>
-            <li><b>SPI</b>Protocol tested against the conformance spec</li>
+            <li><b>SPI</b>Raw SPI commands tested in software against the conformance spec</li>
             <li><b>Firmware</b>STM32 firmware decompiled in Ghidra</li>
             <li><b>Keys</b>Mac-and-Destroy checked across 11 PIN attempts</li>
-            <li class="next"><b>Power</b>Analysis with a ChipWhisperer Husky, started</li>
+            <li class="next"><b>Power</b>Hardware power and SPI bus analysis with a ChipWhisperer Husky, not started</li>
           </ul>
           <p class="fine">Code and report are lab-restricted, so there is no public repository.</p>
         </article>
@@ -303,7 +303,7 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
           <span class="pin"></span><span class="tent" aria-label="Exhibit E">E</span>
           <span class="stamp priv">Open source</span>
           <h3>Contributions</h3>
-          <p><b>OWASP Nettacker.</b> One merged pull request. I researched CVE-2025-32756, an existing critical Fortinet FortiVoice flaw, to improve the scanner's detection modules. Applied to GSoC 2026, not selected, still contributing.</p>
+          <p><b>OWASP Nettacker.</b> One merged pull request (#1487, 15 April 2026): unit tests for the FTP and FTPS brute-force libraries, and a fix that closes the FTP connection after a brute-force attempt. I also proposed detection modules for two Fortinet CVEs, and neither was merged. Applied to GSoC 2026, not selected, still contributing.</p>
           <p><b>VLED Lab, IIT Ropar.</b> Open Source Intern under Prof. Sudarshan Iyengar, with commits on a live public repository. Runs to the end of December 2026.</p>
           <p><b>GirlScript Summer of Code.</b> Contributor.</p>
         </article>
@@ -346,7 +346,7 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
       <li class="ent ok" style="--i:7"><span class="ts">2026-07</span><span class="stamp">LOGGED</span><span class="tx">IJCACI 2026, ransomware review presented</span></li>
       <li class="ent ok" style="--i:8"><span class="ts">2026-09</span><span class="stamp">LOGGED</span><span class="tx">Arduino Edge AI Bootcamp completed</span></li>
       <li class="ent ok" style="--i:9"><span class="ts">2026-10</span><span class="stamp">LOGGED</span><span class="tx">Cisco Cybersecurity Defense Analyst pathway completed</span></li>
-      <li class="ent run" style="--i:10"><span class="ts">2026-11</span><span class="stamp">OPEN</span><span class="tx">Google Gemini Student Ambassador, semester 2. TROPIC01 power analysis. RansomGuard architecture</span></li>
+      <li class="ent run" style="--i:10"><span class="ts">2026-11</span><span class="stamp">OPEN</span><span class="tx">Google Gemini Student Ambassador, semester 2. TROPIC01 hardware analysis, not started. RansomGuard architecture</span></li>
       <li class="ent todo" style="--i:11"><span class="ts">2026-12</span><span class="stamp">PENDING</span><span class="tx">VLED Lab internship ends on the 31st</span></li>
       <li class="ent todo" style="--i:12"><span class="ts">2027</span><span class="stamp">PENDING</span><span class="tx">Summer research placement, hardware security and digital forensics</span></li>
     </ol>
