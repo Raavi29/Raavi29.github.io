@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "slug": "nids-isolation-forest-real-traffic",
+    "title": "An Isolation Forest IDS that passes on synthetic traffic and misses DoS on real traffic",
+    "date": "2026-11-27",
+    "summary": "My Python IDS caught three of four synthetic attack types. On 2.3 million real CIC-IDS2017 flows it caught none of the DoS Hulk or DDoS traffic. What the test showed and why.",
+    "tags": [
+      "intrusion-detection",
+      "machine-learning"
+    ],
+    "minutes": 4
+  }
+]
