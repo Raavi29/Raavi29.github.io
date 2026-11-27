@@ -763,7 +763,7 @@ input[type=range]{width:min(320px,100%);accent-color:var(--tent);height:28px}
       if (!Array.isArray(list) || !list.length) return;
       list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
       box.textContent = "";
-      list.slice(0, 6).forEach((p) => {
+      list.slice(0, 12).forEach((p) => {
         if (!p || !p.slug || !p.title) return;
         const el = document.createElement("article"); el.className = "card note";
         const pin = document.createElement("span"); pin.className = "pin"; el.appendChild(pin);

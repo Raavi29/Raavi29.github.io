@@ -11,14 +11,113 @@
     "minutes": 4
   },
   {
-    "slug": "projects-to-date",
-    "title": "Projects to date",
+    "slug": "tropic01-secure-element-analysis",
+    "title": "Testing a secure element against its datasheet: TROPIC01",
     "date": "2026-11-27",
-    "summary": "Every project I can date since August 2025: hardware security, ransomware research, an intrusion detector, open source and competition teams, with what state each is in.",
+    "summary": "An independent analysis of the TROPIC01 USB devkit at IIT Bhilai: 62 findings and a conformance test suite from the software phase, with the hardware phase still ahead.",
     "tags": [
-      "projects",
-      "overview"
+      "hardware",
+      "secure-element"
     ],
-    "minutes": 5
+    "minutes": 3
+  },
+  {
+    "slug": "trustoken-industry-project",
+    "title": "TrusToken: security analysis of an industry crypto token",
+    "date": "2026-11-27",
+    "summary": "Scope and status of my TrusToken work at IIT Bhilai. The project belongs to an industry partner, so this note carries no findings.",
+    "tags": [
+      "hardware",
+      "industry-project"
+    ],
+    "minutes": 2
+  },
+  {
+    "slug": "ransomware-review-ijcaci-2026",
+    "title": "A thematic review of ransomware detection, forensics and recovery",
+    "date": "2026-11-27",
+    "summary": "My IJCACI 2026 paper: 14 peer-reviewed studies, seven themes, and where detection accuracy and forensic recoverability do not line up.",
+    "tags": [
+      "ransomware",
+      "paper"
+    ],
+    "minutes": 4
+  },
+  {
+    "slug": "ransomguard-architecture",
+    "title": "RansomGuard: ransomware detection that preserves evidence",
+    "date": "2026-11-27",
+    "summary": "A detector that builds a forensic evidence package at the moment it fires. Architecture phase, no benchmark results yet.",
+    "tags": [
+      "ransomware",
+      "forensics"
+    ],
+    "minutes": 3
+  },
+  {
+    "slug": "green-light-sih-2025",
+    "title": "Green Light: adaptive traffic signals for Smart India Hackathon 2025",
+    "date": "2026-11-27",
+    "summary": "Team Void Pointers' national-finalist project at IIIT Dharwad: vehicle detection, a risk engine, a SUMO simulation and the four hours before the demo.",
+    "tags": [
+      "hackathon",
+      "computer-vision"
+    ],
+    "minutes": 4
+  },
+  {
+    "slug": "one-true-friend-sap-hackfest",
+    "title": "One True Friend: an inclusive workforce platform for SAP Hackfest 2026",
+    "date": "2026-11-27",
+    "summary": "A six-agent platform that matches workers to jobs with human review on every match, taken to the finale round of SAP Hackfest North Region 2026.",
+    "tags": [
+      "hackathon",
+      "ai-agents"
+    ],
+    "minutes": 3
+  },
+  {
+    "slug": "saheli-yi-yuva-2026",
+    "title": "Saheli: a WhatsApp-first marketplace for homebound women",
+    "date": "2026-11-27",
+    "summary": "My team's entry at the CII Yi Yuva national grand finale 2026: a labour marketplace that works through WhatsApp.",
+    "tags": [
+      "hackathon",
+      "product"
+    ],
+    "minutes": 2
+  },
+  {
+    "slug": "owasp-nettacker-contributions",
+    "title": "What I sent to OWASP Nettacker, and what was merged",
+    "date": "2026-11-27",
+    "summary": "One merged pull request and the ones that were not: FTP tests, SSL and IP tests, and two Fortinet detection modules.",
+    "tags": [
+      "open-source",
+      "nettacker"
+    ],
+    "minutes": 4
+  },
+  {
+    "slug": "malware-analysis-lab",
+    "title": "A malware analysis lab on one desktop",
+    "date": "2026-11-27",
+    "summary": "The lab I built for ransomware work: REMnux and FlareVM on Host-Only networking, on my own machine.",
+    "tags": [
+      "malware",
+      "lab"
+    ],
+    "minutes": 2
+  },
+  {
+    "slug": "power-analysis-and-rowhammer-practice",
+    "title": "Practice work: power traces on a ChipWhisperer Nano and Rowhammer in simulation",
+    "date": "2026-11-27",
+    "summary": "Two exercises I used to learn side-channel and fault attacks before touching real hardware.",
+    "tags": [
+      "side-channel",
+      "learning"
+    ],
+    "minutes": 2
   }
 ]
